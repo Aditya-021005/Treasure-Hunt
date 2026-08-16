@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 const COOKIE = "bep_hunt";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
+/** Organiser preview: unlocks the hunt early for this browser only. */
+export const PREVIEW_COOKIE = "bep_preview";
+const PREVIEW_MAX_AGE = 60 * 60 * 12; // 12 hours
+
 /** Short-lived cookies that carry the OAuth handshake across the redirect. */
 export const OAUTH_STATE = "bep_oauth_state";
 export const OAUTH_VERIFIER = "bep_oauth_verifier";
@@ -69,6 +73,54 @@ export async function writeSession(userId: string): Promise<void> {
 
 export async function clearSession(): Promise<void> {
   (await cookies()).delete(COOKIE);
+}
+
+/* ------------------------------ preview mode ---------------------- */
+
+/**
+ * A shared key that lets organisers walk the whole hunt before it opens,
+ * on the real deployment, without unlocking it for anybody else.
+ *
+ * The cookie stores an HMAC of the key rather than the key itself, so
+ * rotating HUNT_PREVIEW_KEY instantly invalidates every pass that was
+ * handed out.
+ */
+function previewKey(): string | null {
+  const k = process.env.HUNT_PREVIEW_KEY;
+  return k && k.length >= 8 ? k : null;
+}
+
+export function previewEnabled(): boolean {
+  return previewKey() !== null;
+}
+
+export function previewKeyMatches(candidate: string): boolean {
+  const k = previewKey();
+  return k !== null && safeEqual(candidate, k);
+}
+
+export async function grantPreview(): Promise<void> {
+  const k = previewKey();
+  if (!k) return;
+  (await cookies()).set(PREVIEW_COOKIE, sign(`preview:${k}`), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: secureCookies(),
+    path: "/",
+    maxAge: PREVIEW_MAX_AGE,
+  });
+}
+
+export async function revokePreview(): Promise<void> {
+  (await cookies()).delete(PREVIEW_COOKIE);
+}
+
+/** Whether this request carries a valid, currently-configured pass. */
+export async function hasPreviewAccess(): Promise<boolean> {
+  const k = previewKey();
+  if (!k) return false;
+  const raw = (await cookies()).get(PREVIEW_COOKIE)?.value;
+  return raw ? safeEqual(raw, sign(`preview:${k}`)) : false;
 }
 
 /* ---------------------------- oauth handshake --------------------- */

@@ -15,6 +15,11 @@ export function proxy(req: NextRequest) {
   const { phase } = eventWindow();
   if (phase === "open") return NextResponse.next();
 
+  // Organisers previewing the hunt early. Only the presence of the cookie
+  // is checked here — the API verifies its signature before handing over
+  // any puzzle content, so a forged cookie gets an empty terminal.
+  if (req.cookies.has("bep_preview")) return NextResponse.next();
+
   const url = req.nextUrl.clone();
   url.pathname = "/";
   url.search = phase === "before" ? "?locked=1" : "?closed=1";

@@ -1,4 +1,4 @@
-import { readSession } from "@/lib/session";
+import { hasPreviewAccess, readSession } from "@/lib/session";
 import { getMe } from "@/lib/accounts";
 
 /**
@@ -9,5 +9,5 @@ import { getMe } from "@/lib/accounts";
  */
 export async function GET() {
   const userId = await readSession();
-  return Response.json(await getMe(userId));
+  return Response.json(await getMe(userId, await hasPreviewAccess()));
 }

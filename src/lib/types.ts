@@ -96,6 +96,9 @@ export type Me = {
    * people register into a void.
    */
   storageReady: boolean;
+  /** This browser holds an organiser preview pass: the hunt is unlocked
+   *  for them even before the start. */
+  preview: boolean;
 };
 
 export type TeamState = {

@@ -47,7 +47,10 @@ export async function upsertUser(identity: GoogleIdentity): Promise<string> {
 }
 
 /** Everything the browser is allowed to know about the current visitor. */
-export async function getMe(userId: string | null): Promise<Me> {
+export async function getMe(
+  userId: string | null,
+  preview = false,
+): Promise<Me> {
   const now = Date.now();
 
   const base: Me = {
@@ -57,6 +60,7 @@ export async function getMe(userId: string | null): Promise<Me> {
     maxTeamSize: MAX_TEAM_SIZE,
     auth: { google: googleConfigured(), mock: mockAuthEnabled() },
     storageReady: storageReady(),
+    preview,
   };
 
   if (!userId) return base;

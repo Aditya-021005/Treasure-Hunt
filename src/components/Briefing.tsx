@@ -55,6 +55,7 @@ export default function Briefing() {
     load();
   }, [load]);
 
+  const previewFlag = params.get("preview");
   const phase = me?.event.phase ?? "before";
   const opensAt = me?.event.opensAt ?? null;
 
@@ -86,7 +87,31 @@ export default function Briefing() {
             talks. Every answer is the key to the next door.
           </p>
 
-          {locked && (
+          {me?.preview && (
+            <p className="mt-6 flex max-w-lg items-start gap-2 border border-amber/50 bg-amber/10 px-4 py-3 text-[12px] leading-relaxed text-amber">
+              <span aria-hidden className="mt-0.5">▲</span>
+              <span>
+                <strong className="tracked">Organiser preview.</strong> The
+                hunt is unlocked for this browser only — everyone else still
+                sees the countdown. Anything you solve is written to the real
+                scoreboard, so clear it before the event.
+              </span>
+            </p>
+          )}
+
+          {previewFlag === "bad" && (
+            <p className="mt-6 max-w-lg border border-danger/40 bg-danger/5 px-4 py-3 text-[12px] text-danger">
+              That preview link is not valid.
+            </p>
+          )}
+
+          {previewFlag === "off" && (
+            <p className="mt-6 max-w-lg border border-danger/40 bg-danger/5 px-4 py-3 text-[12px] text-danger">
+              Preview access is not enabled on this deployment.
+            </p>
+          )}
+
+          {locked && !me?.preview && (
             <p
               role="status"
               className="mt-6 max-w-lg border border-amber/40 bg-amber/5 px-4 py-3 text-[12px] leading-relaxed text-amber"
@@ -97,7 +122,7 @@ export default function Briefing() {
             </p>
           )}
 
-          {phase === "before" && opensAt !== null && me && (
+          {phase === "before" && !me?.preview && opensAt !== null && me && (
             <div className="mt-8 max-w-lg">
               <Countdown
                 target={opensAt}
@@ -108,10 +133,10 @@ export default function Briefing() {
             </div>
           )}
 
-          {phase === "open" && (
+          {(phase === "open" || me?.preview) && (
             <p className="mt-8 inline-flex items-center gap-2 border border-phos/30 bg-phos/5 px-4 py-2 text-[11px] tracked text-phos">
               <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-phos" />
-              The hunt is live
+              {me?.preview && phase !== "open" ? "Unlocked for you" : "The hunt is live"}
             </p>
           )}
 

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { readSession } from "@/lib/session";
+import { hasPreviewAccess, readSession } from "@/lib/session";
 import { unlockHint } from "@/lib/hunt";
 
 /** POST /api/hint — reveal the next hint, charging a time penalty if due. */
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   if (!Number.isInteger(level) || level < 1)
     return Response.json({ error: "Bad level." }, { status: 400 });
 
-  const result = await unlockHint(userId, level);
+  const result = await unlockHint(userId, level, await hasPreviewAccess());
   if (!result.ok)
     return Response.json({ error: result.error }, { status: result.status });
   return Response.json(result);

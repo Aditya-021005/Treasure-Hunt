@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { readSession } from "@/lib/session";
+import { hasPreviewAccess, readSession } from "@/lib/session";
 import { read } from "@/lib/store";
 import { submitAnswer, toPublicLevel } from "@/lib/hunt";
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (answer.length > 200)
     return Response.json({ error: "That is not an answer." }, { status: 400 });
 
-  const result = await submitAnswer(userId, level, answer);
+  const result = await submitAnswer(userId, level, answer, await hasPreviewAccess());
 
   if (!result.ok) {
     return Response.json(

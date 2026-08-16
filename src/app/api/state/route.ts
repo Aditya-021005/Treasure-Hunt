@@ -1,4 +1,4 @@
-import { readSession } from "@/lib/session";
+import { hasPreviewAccess, readSession } from "@/lib/session";
 import { transact } from "@/lib/store";
 import { ensureStarted, guard, toPublicLevel, toState } from "@/lib/hunt";
 
@@ -13,12 +13,13 @@ export async function GET() {
   if (!userId) return Response.json({ error: "Not signed in." }, { status: 401 });
 
   const now = Date.now();
+  const preview = await hasPreviewAccess();
 
   // Reading state is also what starts a team's clock, so this is a write.
   const payload = await transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now);
+    const denied = guard(user, team, now, preview);
     if (denied) return { denied };
 
     ensureStarted(team!, now);

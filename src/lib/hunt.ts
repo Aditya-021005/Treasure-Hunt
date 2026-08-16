@@ -165,10 +165,12 @@ export function guard(
   user: User | undefined,
   team: Team | undefined,
   now: number,
+  /** Organiser preview pass; bypasses the time window only. */
+  preview = false,
 ): Denial | null {
   if (!user) return { error: "Sign in to continue.", status: 401 };
   if (!team) return { error: "Join or create a team first.", status: 403 };
-  if (!huntIsOpen(now)) {
+  if (!preview && !huntIsOpen(now)) {
     const w = publicWindow(now);
     return {
       error:
@@ -218,13 +220,14 @@ export async function submitAnswer(
   userId: string,
   levelId: number,
   guess: string,
+  preview = false,
 ): Promise<SubmitResult> {
   const now = Date.now();
 
   return transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now);
+    const denied = guard(user, team, now, preview);
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
@@ -291,13 +294,14 @@ export async function checkGate(
   userId: string,
   levelId: number,
   sequence: string[],
+  preview = false,
 ): Promise<GateResult> {
   const now = Date.now();
 
   return transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now);
+    const denied = guard(user, team, now, preview);
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
@@ -338,13 +342,14 @@ export type HintResult =
 export async function unlockHint(
   userId: string,
   levelId: number,
+  preview = false,
 ): Promise<HintResult> {
   const now = Date.now();
 
   return transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now);
+    const denied = guard(user, team, now, preview);
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;

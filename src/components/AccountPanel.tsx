@@ -71,7 +71,8 @@ export default function AccountPanel({ me, onChanged }: Props) {
     [onChanged],
   );
 
-  const open = me.event.phase === "open";
+  // A preview pass opens the terminal without opening the event.
+  const open = me.event.phase === "open" || me.preview;
 
   /* ------------------------------ signed out ---------------------- */
 

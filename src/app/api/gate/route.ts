@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { readSession } from "@/lib/session";
+import { hasPreviewAccess, readSession } from "@/lib/session";
 import { checkGate } from "@/lib/hunt";
 
 /**
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!Number.isInteger(level) || !sequence)
     return Response.json({ error: "Malformed request." }, { status: 400 });
 
-  const result = await checkGate(userId, level, sequence);
+  const result = await checkGate(userId, level, sequence, await hasPreviewAccess());
   if (!result.ok)
     return Response.json({ error: result.error }, { status: result.status });
   return Response.json(result);
