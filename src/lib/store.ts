@@ -94,6 +94,17 @@ export const MAX_TEAM_SIZE = (() => {
 let cache: DB | null = null;
 let chain: Promise<unknown> = Promise.resolve();
 
+// Serverless hosts give each instance its own read-only filesystem, so the
+// file driver silently loses data there. Say so loudly rather than letting
+// it be discovered mid-event.
+if (process.env.VERCEL && !usingPostgres()) {
+  console.error(
+    "[bep-hunt] FATAL CONFIG: running on Vercel without DATABASE_URL. " +
+      "Teams and progress will NOT persist between requests. " +
+      "Set DATABASE_URL to a Postgres connection string and redeploy.",
+  );
+}
+
 async function load(): Promise<DB> {
   if (cache) return cache;
   try {
