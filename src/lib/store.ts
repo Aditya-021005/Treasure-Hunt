@@ -94,13 +94,25 @@ export const MAX_TEAM_SIZE = (() => {
 let cache: DB | null = null;
 let chain: Promise<unknown> = Promise.resolve();
 
-// Serverless hosts give each instance its own read-only filesystem, so the
-// file driver silently loses data there. Say so loudly rather than letting
-// it be discovered mid-event.
-if (process.env.VERCEL && !usingPostgres()) {
+/** True on hosts whose filesystem is read-only and per-instance. */
+function ephemeralFilesystem(): boolean {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+/**
+ * Whether the store can actually hold data. False means the deployment is
+ * misconfigured — serverless with no database — and every write would
+ * throw. Endpoints check this so players get a clear message instead of a
+ * 500, and the organisers see the reason in the log.
+ */
+export function storageReady(): boolean {
+  return usingPostgres() || !ephemeralFilesystem();
+}
+
+if (!storageReady()) {
   console.error(
-    "[bep-hunt] FATAL CONFIG: running on Vercel without DATABASE_URL. " +
-      "Teams and progress will NOT persist between requests. " +
+    "[bep-hunt] FATAL CONFIG: serverless host with no DATABASE_URL. " +
+      "Sign-in and registration cannot be saved. " +
       "Set DATABASE_URL to a Postgres connection string and redeploy.",
   );
 }

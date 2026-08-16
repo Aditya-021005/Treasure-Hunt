@@ -14,6 +14,8 @@ const AUTH_ERRORS: Record<string, string> = {
   state: "Sign-in could not be verified. Try again.",
   exchange: "Google rejected the sign-in. Try again.",
   domain: "Use your BITS email address to sign in.",
+  storage:
+    "The server cannot save sign-ins right now. This is a setup problem, not you — tell the organisers.",
 };
 
 type Props = {
@@ -88,7 +90,12 @@ export default function AccountPanel({ me, onChanged }: Props) {
           </p>
         )}
 
-        {me.auth.google ? (
+        {!me.storageReady ? (
+          <p className="mt-6 border border-danger/40 bg-danger/5 px-4 py-3 text-[12px] leading-relaxed text-danger">
+            This deployment has no database, so nothing can be saved yet.
+            Registration is closed until the organisers set DATABASE_URL.
+          </p>
+        ) : me.auth.google ? (
           <a href="/api/auth/start" className="btn notch mt-6 flex w-full gap-3">
             <GoogleMark />
             Sign in with Google
@@ -100,7 +107,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
           </p>
         )}
 
-        {me.auth.mock && <MockSignIn onDone={onChanged} />}
+        {me.auth.mock && me.storageReady && <MockSignIn onDone={onChanged} />}
 
         <p className="mt-4 text-[10px] leading-relaxed tracked text-ink-dim">
           We store your name, email and team only.

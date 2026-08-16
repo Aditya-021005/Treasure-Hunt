@@ -90,6 +90,12 @@ export type Me = {
   maxTeamSize: number;
   /** Which sign-in routes are actually usable on this deployment. */
   auth: { google: boolean; mock: boolean };
+  /**
+   * False when the deployment cannot persist anything (serverless with no
+   * database). The UI blocks sign-in and says so rather than letting
+   * people register into a void.
+   */
+  storageReady: boolean;
 };
 
 export type TeamState = {

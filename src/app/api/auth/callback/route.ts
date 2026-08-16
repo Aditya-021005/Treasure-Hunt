@@ -35,8 +35,17 @@ export async function GET(req: NextRequest) {
 
   if (!domainAllowed(result.identity.email)) return fail(origin, "domain");
 
-  const userId = await upsertUser(result.identity);
-  await writeSession(userId);
+  // Saving can fail if the deployment has no working store. That is an
+  // operator problem, not the player's — send them somewhere with an
+  // explanation instead of a bare 500.
+  let userId: string;
+  try {
+    userId = await upsertUser(result.identity);
+  } catch (err) {
+    console.error("[bep-hunt] could not save the signed-in user:", err);
+    return fail(origin, "storage");
+  }
 
+  await writeSession(userId);
   return Response.redirect(`${origin}/`, 302);
 }

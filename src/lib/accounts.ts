@@ -10,6 +10,7 @@ import {
   normalizeCode,
   read,
   slugify,
+  storageReady,
   transact,
 } from "@/lib/store";
 import type { Me } from "@/lib/types";
@@ -55,6 +56,7 @@ export async function getMe(userId: string | null): Promise<Me> {
     event: publicWindow(now),
     maxTeamSize: MAX_TEAM_SIZE,
     auth: { google: googleConfigured(), mock: mockAuthEnabled() },
+    storageReady: storageReady(),
   };
 
   if (!userId) return base;
