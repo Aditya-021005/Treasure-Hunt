@@ -1,0 +1,29 @@
+# Render blueprint. Either use this, or create the service by hand with
+# the same build/start commands.
+services:
+  - type: web
+    name: bep-cipher-hunt
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/me
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HUNT_SECRET
+        generateValue: true
+      - key: HUNT_OPENS_AT
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bep-hunt-db
+          property: connectionString
+
+databases:
+  - name: bep-hunt-db
+    plan: basic-256mb

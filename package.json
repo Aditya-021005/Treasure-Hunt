@@ -1,0 +1,30 @@
+{
+  "name": "bep-treasure-hunt",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && npm run check:leaks",
+    "start": "next start",
+    "lint": "eslint",
+    "check:leaks": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-leaks.mjs",
+    "verify": "next build && npm run check:leaks",
+    "db:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/db-check.mjs"
+  },
+  "dependencies": {
+    "next": "16.3.1",
+    "postgres": "^3.4.9",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
