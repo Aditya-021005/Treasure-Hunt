@@ -99,6 +99,8 @@ export type Me = {
   /** This browser holds an organiser preview pass: the hunt is unlocked
    *  for them even before the start. */
   preview: boolean;
+  /** The signed-in account is on the admin allow-list. */
+  isAdmin: boolean;
 };
 
 export type TeamState = {
@@ -127,6 +129,41 @@ export type LeaderboardRow = {
   timeMs: number;
   hintsUsed: number;
   isYou: boolean;
+};
+
+/* --------------------------------- admin -------------------------- */
+
+export type AdminMember = { name: string; email: string; isCaptain: boolean };
+
+export type AdminTeamRow = {
+  id: string;
+  name: string;
+  code: string;
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+  solved: number;
+  totalLevels: number;
+  timeMs: number;
+  penaltyMs: number;
+  hintsUsed: number;
+  attempts: number;
+  members: AdminMember[];
+};
+
+export type AdminOverview = {
+  event: EventInfo;
+  /** The window is set from the panel rather than the environment. */
+  overridden: boolean;
+  totals: {
+    teams: number;
+    users: number;
+    started: number;
+    finished: number;
+    totalLevels: number;
+  };
+  teams: AdminTeamRow[];
+  admins: string[];
 };
 
 export type ApiError = { error: string; lockedUntil?: number; opensAt?: number };

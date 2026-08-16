@@ -200,6 +200,49 @@ Tune all of this in `src/lib/hunt.ts` (`MIN_GAP_MS`, `STRIKES`,
 
 ---
 
+## Admin panel
+
+`/admin` is where the event is actually run. Two ways in, either is enough:
+
+- **`HUNT_ADMINS`** — comma-separated emails, matched against the signed-in
+  Google account.
+- **`HUNT_ADMIN_USER` / `HUNT_ADMIN_PASSWORD`** — a username and password
+  form on `/admin` itself, for when you do not want to depend on which
+  Google account is signed in.
+
+If neither matches, every `/api/admin/*` route answers **404** rather than
+403, so the panel does not advertise that it exists. Password attempts are
+throttled: eight misses from one IP and that IP is locked out for five
+minutes. The session cookie holds an HMAC derived from the credentials, so
+changing the password revokes every session immediately.
+
+What it does:
+
+| Section | What you can do |
+| --- | --- |
+| Stats | teams, players, how many started and finished |
+| Event window | open now, seal until a date/time, close now — **no redeploy** |
+| Puzzles | add, edit, reorder and delete locks; edit blocks, answers, hints |
+| Teams | full roster with emails, progress and time; reset or delete a team |
+| Danger zone | wipe every team and player, behind a type-WIPE confirm |
+| Export | ranked results as CSV |
+
+### Puzzles live in the database
+
+`src/content/levels.ts` is only a **seed**. The moment you save from the
+panel, the database becomes authoritative — which means the real answers
+never have to be committed to the repository, even a public one. Saving is
+all-or-nothing and validated server-side, so a half-written level cannot
+reach players. "Discard and go back to the puzzles in the code" restores
+the seed.
+
+Changing the event window from the panel is stored in the database too, so
+it takes effect immediately. `src/proxy.ts` runs on the edge and cannot
+read the database, so the `/hunt` page carries its own server-side check —
+that is the one that honours the panel.
+
+---
+
 ## Deploying
 
 The same build runs on both. The only thing that differs is where the

@@ -24,8 +24,8 @@ export async function GET() {
 
     ensureStarted(team!, now);
     return {
-      state: toState(team!, db.users, userId, now),
-      level: toPublicLevel(team!, team!.level),
+      state: toState(db, team!, db.users, userId, now, db.eventOverride ?? null),
+      level: toPublicLevel(db, team!, team!.level),
     };
   });
 

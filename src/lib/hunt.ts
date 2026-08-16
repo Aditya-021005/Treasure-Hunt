@@ -1,11 +1,8 @@
-import {
-  getLevel,
-  HINT_PENALTY_MINUTES,
-  LEVELS,
-  TOTAL_LEVELS,
-} from "@/content/levels";
+import { HINT_PENALTY_MINUTES } from "@/content/levels";
+import { levelFrom, levelsOf, totalLevels } from "@/lib/levels";
+import type { DB } from "@/lib/store";
 import { answerShape, matchesAnswer } from "@/lib/answers";
-import { huntIsOpen, publicWindow } from "@/lib/event";
+import { huntIsOpen, publicWindow, type EventOverride } from "@/lib/event";
 import {
   formatCode,
   read,
@@ -44,8 +41,8 @@ export function elapsedMs(team: Team, now: number): number {
   return Math.max(0, end - team.startedAt) + team.penaltyMs;
 }
 
-function rail(team: Team): RailEntry[] {
-  return LEVELS.map((l) => ({
+function rail(db: DB, team: Team): RailEntry[] {
+  return levelsOf(db).map((l) => ({
     id: l.id,
     codename: l.codename,
     status:
@@ -70,6 +67,7 @@ export function membersOf(
 }
 
 export function toTeamSummary(
+  db: DB,
   team: Team,
   users: Record<string, User>,
   viewerId: string,
@@ -79,17 +77,19 @@ export function toTeamSummary(
     code: formatCode(team.code),
     isCaptain: team.captainId === viewerId,
     members: membersOf(team, users, viewerId),
-    solved: Math.min(team.level - 1, TOTAL_LEVELS),
-    totalLevels: TOTAL_LEVELS,
-    finished: team.level > TOTAL_LEVELS,
+    solved: Math.min(team.level - 1, totalLevels(db)),
+    totalLevels: totalLevels(db),
+    finished: team.level > totalLevels(db),
   };
 }
 
 export function toState(
+  db: DB,
   team: Team,
   users: Record<string, User>,
   viewerId: string,
   now: number,
+  override: EventOverride = null,
 ): TeamState {
   return {
     team: {
@@ -99,16 +99,16 @@ export function toState(
       isCaptain: team.captainId === viewerId,
     },
     level: team.level,
-    totalLevels: TOTAL_LEVELS,
-    finished: team.level > TOTAL_LEVELS,
+    totalLevels: totalLevels(db),
+    finished: team.level > totalLevels(db),
     startedAt: team.startedAt ?? now,
     finishedAt: team.finishedAt,
     penaltyMs: team.penaltyMs,
     elapsedMs: elapsedMs(team, now),
-    rail: rail(team),
+    rail: rail(db, team),
     lockedUntil: team.lockedUntil > now ? team.lockedUntil : null,
     hintPenaltyMinutes: HINT_PENALTY_MINUTES,
-    event: publicWindow(now),
+    event: publicWindow(now, override),
   };
 }
 
@@ -116,8 +116,8 @@ export function toState(
  * Builds the browser-facing view of a level. Answers, gate sequences and
  * un-unlocked hints are stripped here — this is the security boundary.
  */
-export function toPublicLevel(team: Team, id: number): PublicLevel | null {
-  const level = getLevel(id);
+export function toPublicLevel(db: DB, team: Team, id: number): PublicLevel | null {
+  const level = levelFrom(db, id);
   if (!level) return null;
 
   const revealed = team.hintsUsed[String(id)] ?? 0;
@@ -167,11 +167,12 @@ export function guard(
   now: number,
   /** Organiser preview pass; bypasses the time window only. */
   preview = false,
+  override: EventOverride = null,
 ): Denial | null {
   if (!user) return { error: "Sign in to continue.", status: 401 };
   if (!team) return { error: "Join or create a team first.", status: 403 };
-  if (!preview && !huntIsOpen(now)) {
-    const w = publicWindow(now);
+  if (!preview && !huntIsOpen(now, override)) {
+    const w = publicWindow(now, override);
     return {
       error:
         w.phase === "before"
@@ -182,6 +183,14 @@ export function guard(
     };
   }
   return null;
+}
+
+/**
+ * The live window, including anything set from the admin panel. Used by
+ * server components that need to gate before rendering.
+ */
+export async function huntOpenNow(): Promise<boolean> {
+  return read((db) => huntIsOpen(Date.now(), db.eventOverride ?? null));
 }
 
 /** Starts a team's clock the first time they reach the hunt after it opens. */
@@ -227,11 +236,11 @@ export async function submitAnswer(
   return transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now, preview);
+    const denied = guard(user, team, now, preview, db.eventOverride ?? null);
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
-    if (t.level > TOTAL_LEVELS)
+    if (t.level > totalLevels(db))
       return { ok: false as const, error: "The hunt is already complete.", status: 400 };
     if (levelId !== t.level)
       return { ok: false as const, error: "That level is not open to you.", status: 403 };
@@ -246,7 +255,7 @@ export async function submitAnswer(
       return { ok: false as const, error: "Slow down.", status: 429 };
 
     ensureStarted(t, now);
-    const level = getLevel(levelId)!;
+    const level = levelFrom(db, levelId)!;
     t.lastAttemptAt = now;
 
     if (level.gate && !t.gatesOpen.includes(levelId)) {
@@ -260,13 +269,13 @@ export async function submitAnswer(
     if (matchesAnswer(guess, level.answers)) {
       t.solvedAt[String(levelId)] = now;
       t.level = levelId + 1;
-      if (t.level > TOTAL_LEVELS) t.finishedAt = now;
+      if (t.level > totalLevels(db)) t.finishedAt = now;
       return {
         ok: true as const,
         correct: true as const,
         successNote: level.successNote,
-        finished: t.level > TOTAL_LEVELS,
-        state: toState(t, db.users, userId, now),
+        finished: t.level > totalLevels(db),
+        state: toState(db, t, db.users, userId, now, db.eventOverride ?? null),
       };
     }
 
@@ -280,7 +289,7 @@ export async function submitAnswer(
       correct: false as const,
       message: WRONG_LINES[attempts % WRONG_LINES.length],
       lockedUntil: cool > 0 ? t.lockedUntil : null,
-      state: toState(t, db.users, userId, now),
+      state: toState(db, t, db.users, userId, now, db.eventOverride ?? null),
     };
   });
 }
@@ -301,14 +310,14 @@ export async function checkGate(
   return transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now, preview);
+    const denied = guard(user, team, now, preview, db.eventOverride ?? null);
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
     if (levelId !== t.level)
       return { ok: false as const, error: "That level is not open to you.", status: 403 };
 
-    const level = getLevel(levelId);
+    const level = levelFrom(db, levelId);
     if (!level?.gate)
       return { ok: false as const, error: "This level has no lock.", status: 400 };
     if (now - t.lastAttemptAt < MIN_GAP_MS)
@@ -331,7 +340,7 @@ export async function checkGate(
     }
 
     if (!t.gatesOpen.includes(levelId)) t.gatesOpen.push(levelId);
-    return { ok: true as const, opened: true as const, level: toPublicLevel(t, levelId)! };
+    return { ok: true as const, opened: true as const, level: toPublicLevel(db, t, levelId)! };
   });
 }
 
@@ -349,14 +358,14 @@ export async function unlockHint(
   return transact((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    const denied = guard(user, team, now, preview);
+    const denied = guard(user, team, now, preview, db.eventOverride ?? null);
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
     if (levelId !== t.level)
       return { ok: false as const, error: "That level is not open to you.", status: 403 };
 
-    const level = getLevel(levelId);
+    const level = levelFrom(db, levelId);
     if (!level) return { ok: false as const, error: "Unknown level.", status: 400 };
 
     const used = t.hintsUsed[String(levelId)] ?? 0;
@@ -374,8 +383,8 @@ export async function unlockHint(
 
     return {
       ok: true as const,
-      level: toPublicLevel(t, levelId)!,
-      state: toState(t, db.users, userId, now),
+      level: toPublicLevel(db, t, levelId)!,
+      state: toState(db, t, db.users, userId, now, db.eventOverride ?? null),
       charged,
     };
   });
@@ -388,7 +397,8 @@ export async function leaderboard(
 ): Promise<LeaderboardRow[]> {
   const rows = await read((db) =>
     Object.values(db.teams).map((t) => {
-      const solved = Math.min(t.level - 1, TOTAL_LEVELS);
+      const total = totalLevels(db);
+      const solved = Math.min(t.level - 1, total);
       const solveTimes = Object.values(t.solvedAt);
       const lastSolve = solveTimes.length ? Math.max(...solveTimes) : null;
       // Finished teams are timed to the finish; teams still playing are
@@ -399,7 +409,7 @@ export async function leaderboard(
         id: t.id,
         name: t.name,
         solved,
-        totalLevels: TOTAL_LEVELS,
+        totalLevels: total,
         finished: t.finishedAt !== null,
         timeMs: Math.max(0, end - start) + t.penaltyMs,
         hintsUsed: Object.values(t.hintsUsed).reduce((a, b) => a + b, 0),

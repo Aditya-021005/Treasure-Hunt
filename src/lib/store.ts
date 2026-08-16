@@ -31,6 +31,8 @@ export type User = {
   lastSeenAt: number;
 };
 
+export type { DB };
+
 export type Team = {
   id: string;
   name: string;
@@ -64,6 +66,10 @@ export type Team = {
 
 type DB = {
   version: 2;
+  /** Event window set from the admin panel; null = follow the env vars. */
+  eventOverride?: { opensAt: number | null; closesAt: number | null } | null;
+  /** Puzzles edited in the admin panel; empty = use the shipped seed. */
+  levels?: import("@/content/levels").Level[];
   users: Record<string, User>;
   teams: Record<string, Team>;
   /** google sub -> user id */
@@ -79,6 +85,8 @@ const DATA_FILE =
 
 const EMPTY: DB = {
   version: 2,
+  eventOverride: null,
+  levels: [],
   users: {},
   teams: {},
   userBySub: {},
@@ -92,7 +100,26 @@ export const MAX_TEAM_SIZE = (() => {
 })();
 
 let cache: DB | null = null;
+/** mtime of the file the cache was built from. */
+let cacheStamp = 0;
 let chain: Promise<unknown> = Promise.resolve();
+
+/**
+ * The cached document is only good while the file behind it is unchanged.
+ * Next's dev server runs pages and route handlers in separate processes,
+ * so a write from one would otherwise stay invisible to the other until a
+ * restart. One stat per read keeps them coherent.
+ */
+async function cacheIsFresh(): Promise<boolean> {
+  if (!cache) return false;
+  try {
+    const { mtimeMs } = await fs.stat(/*turbopackIgnore: true*/ DATA_FILE);
+    return mtimeMs === cacheStamp;
+  } catch {
+    // File is gone; what we hold is as good as it gets.
+    return true;
+  }
+}
 
 /** True on hosts whose filesystem is read-only and per-instance. */
 function ephemeralFilesystem(): boolean {
@@ -118,7 +145,7 @@ if (!storageReady()) {
 }
 
 async function load(): Promise<DB> {
-  if (cache) return cache;
+  if (await cacheIsFresh()) return cache!;
   try {
     const raw = await fs.readFile(/*turbopackIgnore: true*/ DATA_FILE, "utf8");
     const parsed = JSON.parse(raw) as Partial<DB> & { version?: number };
@@ -141,6 +168,12 @@ async function load(): Promise<DB> {
     }
     cache = structuredClone(EMPTY);
   }
+
+  try {
+    cacheStamp = (await fs.stat(/*turbopackIgnore: true*/ DATA_FILE)).mtimeMs;
+  } catch {
+    cacheStamp = 0;
+  }
   return cache;
 }
 
@@ -151,6 +184,15 @@ async function persist(db: DB): Promise<void> {
   const tmp = `${DATA_FILE}.${process.pid}.tmp`;
   await fs.writeFile(/*turbopackIgnore: true*/ tmp, JSON.stringify(db, null, 2), "utf8");
   await fs.rename(/*turbopackIgnore: true*/ tmp, DATA_FILE);
+
+  // Keep the stamp in step so our own write does not look like someone
+  // else's and force a needless reload.
+  try {
+    cacheStamp = (await fs.stat(/*turbopackIgnore: true*/ DATA_FILE)).mtimeMs;
+    cache = db;
+  } catch {
+    cacheStamp = 0;
+  }
 }
 
 /** Read-modify-write. Nothing else can interleave with the callback. */

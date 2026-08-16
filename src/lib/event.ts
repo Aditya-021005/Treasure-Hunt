@@ -39,9 +39,25 @@ function parse(value: string | undefined, label: string): number | null {
   return ms;
 }
 
-export function eventWindow(now: number = Date.now()): EventWindow {
-  const opensAt = parse(process.env.HUNT_OPENS_AT, "HUNT_OPENS_AT");
-  const closesAt = parse(process.env.HUNT_CLOSES_AT, "HUNT_CLOSES_AT");
+/**
+ * A window set from the admin panel, which wins over the environment so
+ * organisers can open or seal the hunt without a redeploy.
+ */
+export type EventOverride = {
+  opensAt: number | null;
+  closesAt: number | null;
+} | null;
+
+export function eventWindow(
+  now: number = Date.now(),
+  override: EventOverride = null,
+): EventWindow {
+  const opensAt = override
+    ? override.opensAt
+    : parse(process.env.HUNT_OPENS_AT, "HUNT_OPENS_AT");
+  const closesAt = override
+    ? override.closesAt
+    : parse(process.env.HUNT_CLOSES_AT, "HUNT_CLOSES_AT");
 
   const phase: Phase =
     opensAt !== null && now < opensAt
@@ -61,13 +77,13 @@ export function eventWindow(now: number = Date.now()): EventWindow {
 }
 
 /** True only while teams are allowed to see and answer puzzles. */
-export function huntIsOpen(now?: number): boolean {
-  return eventWindow(now).phase === "open";
+export function huntIsOpen(now?: number, override: EventOverride = null): boolean {
+  return eventWindow(now, override).phase === "open";
 }
 
 /** The subset of the window that is safe to hand to the browser. */
-export function publicWindow(now?: number) {
-  const w = eventWindow(now);
+export function publicWindow(now?: number, override: EventOverride = null) {
+  const w = eventWindow(now, override);
   return {
     opensAt: w.opensAt,
     closesAt: w.closesAt,

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const nextLevel = await read((db) => {
     const user = db.users[userId];
     const team = user?.teamId ? db.teams[user.teamId] : undefined;
-    return team ? toPublicLevel(team, team.level) : null;
+    return team ? toPublicLevel(db, team, team.level) : null;
   });
 
   return Response.json({ ...result, nextLevel });

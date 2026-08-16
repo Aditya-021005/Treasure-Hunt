@@ -1,4 +1,5 @@
 import { publicWindow } from "@/lib/event";
+import { isAdminEmail } from "@/lib/admin";
 import { googleConfigured, mockAuthEnabled, type GoogleIdentity } from "@/lib/oauth";
 import { toTeamSummary } from "@/lib/hunt";
 import {
@@ -53,19 +54,21 @@ export async function getMe(
 ): Promise<Me> {
   const now = Date.now();
 
-  const base: Me = {
-    user: null,
-    team: null,
-    event: publicWindow(now),
-    maxTeamSize: MAX_TEAM_SIZE,
-    auth: { google: googleConfigured(), mock: mockAuthEnabled() },
-    storageReady: storageReady(),
-    preview,
-  };
-
-  if (!userId) return base;
-
+  // The window can be set from the admin panel, so it has to be read
+  // from the store rather than the environment alone.
   return read((db) => {
+    const base: Me = {
+      user: null,
+      team: null,
+      event: publicWindow(now, db.eventOverride ?? null),
+      maxTeamSize: MAX_TEAM_SIZE,
+      auth: { google: googleConfigured(), mock: mockAuthEnabled() },
+      storageReady: storageReady(),
+      preview,
+      isAdmin: false,
+    };
+
+    if (!userId) return base;
     const user = db.users[userId];
     if (!user) return base;
 
@@ -73,7 +76,8 @@ export async function getMe(
     return {
       ...base,
       user: { name: user.name, email: user.email, picture: user.picture },
-      team: team ? toTeamSummary(team, db.users, userId) : null,
+      team: team ? toTeamSummary(db, team, db.users, userId) : null,
+      isAdmin: isAdminEmail(user.email),
     };
   });
 }

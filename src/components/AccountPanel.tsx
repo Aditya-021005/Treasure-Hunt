@@ -364,6 +364,14 @@ function Who({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         <p className="truncate text-[13px] text-ink">{me.user.name}</p>
         <p className="truncate text-[10px] text-ink-dim">{me.user.email}</p>
       </div>
+      {me.isAdmin && (
+        <a
+          href="/admin"
+          className="shrink-0 border border-amber/40 px-2 py-1 text-[9px] tracked text-amber transition-colors hover:bg-amber/10"
+        >
+          Admin
+        </a>
+      )}
       <button
         type="button"
         onClick={onSignOut}
