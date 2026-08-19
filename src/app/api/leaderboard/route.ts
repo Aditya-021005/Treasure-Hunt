@@ -11,15 +11,20 @@ import { huntIsOpen, publicWindow } from "@/lib/event";
  */
 export async function GET() {
   const userId = await readSession();
+  const now = Date.now();
 
-  if (!huntIsOpen()) {
-    return Response.json({ rows: [], event: publicWindow() });
+  // The window can be set from the admin panel. Reading it from the
+  // environment alone meant sealing the hunt there left the board wide
+  // open, and opening it there left the board empty.
+  const { override, teamId } = await read((db) => ({
+    override: db.eventOverride ?? null,
+    teamId: userId ? (db.users[userId]?.teamId ?? null) : null,
+  }));
+
+  if (!huntIsOpen(now, override)) {
+    return Response.json({ rows: [], event: publicWindow(now, override) });
   }
 
-  const teamId = userId
-    ? await read((db) => db.users[userId]?.teamId ?? null)
-    : null;
-
   const rows = await leaderboard(teamId);
-  return Response.json({ rows, event: publicWindow() });
+  return Response.json({ rows, event: publicWindow(now, override) });
 }

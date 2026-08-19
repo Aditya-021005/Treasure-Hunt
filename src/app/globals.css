@@ -89,6 +89,13 @@ body {
 
 /* -------------------------------- CRT chrome ----------------------- */
 
+/* How far gone the terminal is: 0 on the first lock, 1 on the last. The
+   hunt shell writes this onto <html> as the team advances. Everything that
+   reads it must look exactly as before at 0. */
+:root {
+  --crt: 0;
+}
+
 .crt-layer {
   position: fixed;
   inset: 0;
@@ -105,7 +112,7 @@ body {
     rgba(0, 0, 0, 0.28) 3px,
     rgba(0, 0, 0, 0.28) 4px
   );
-  opacity: 0.55;
+  opacity: calc(0.55 + var(--crt) * 0.22);
   mix-blend-mode: multiply;
 }
 
@@ -122,6 +129,13 @@ body {
     transparent
   );
   animation: var(--animate-scan);
+  animation-duration: calc(7s - var(--crt) * 3s);
+}
+
+/* The whole-page flicker comes round more often the deeper you are:
+   every 7s at the start, every ~2.4s on the last lock. */
+.animate-flicker {
+  animation-duration: calc(7s - var(--crt) * 4.6s);
 }
 
 /* corner vignette + phosphor bloom */
@@ -253,9 +267,22 @@ body {
   -webkit-user-select: none;
 }
 
+/* Words write themselves out left to right and then STAY — this passage is
+   a counting puzzle, so nothing may fade back out under the reader. The
+   shimmer afterwards is deliberately shallow: eerie, never illegible. */
 .fade-word {
-  animation: breathe var(--dur, 5s) ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
+  animation:
+    wordIn 0.45s ease-out var(--delay, 0s) both,
+    wordHold 6s ease-in-out calc(var(--delay, 0s) + 0.45s) infinite;
+}
+
+@keyframes wordIn {
+  from { opacity: 0; filter: blur(5px); transform: translateY(3px); }
+  to { opacity: 1; filter: none; transform: none; }
+}
+@keyframes wordHold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.78; }
 }
 
 /* --------------------------- reduced motion ------------------------ */
@@ -269,7 +296,9 @@ body {
     transition-duration: 0.001ms !important;
   }
   .crt-sweep::after { display: none; }
-  .fade-word { opacity: 1; }
+  .fade-word { opacity: 1; filter: none; transform: none; }
+  /* !important beats the inline value the hunt shell sets on <html>. */
+  :root { --crt: 0 !important; }
 }
 
 /* ================================================================== *

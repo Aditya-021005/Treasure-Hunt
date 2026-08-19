@@ -26,11 +26,18 @@ function hash(s: string): number {
   return h >>> 0;
 }
 
+/** Seconds between two consecutive words appearing. */
+const WORD_STEP_S = 0.04;
+
 /**
  * The passage is a counting puzzle, so the word ORDER is the secret.
  * Words are emitted into the DOM in a shuffled order and put back into
  * place with CSS `order`, and selection is disabled. Reading it on screen
  * works exactly as normal; copy-pasting the markup does not.
+ *
+ * The words then write themselves out one at a time, in reading order, and
+ * STAY. They used to breathe in and out forever, which fought the puzzle —
+ * you cannot count to forty-two when a word is mid-fade.
  */
 function FadeEssay({ text, note }: { text: string; note?: string }) {
   const { words, domOrder } = useMemo(() => {
@@ -62,8 +69,9 @@ function FadeEssay({ text, note }: { text: string; note?: string }) {
             style={
               {
                 order: original,
-                "--delay": `${(original % 11) * 0.37}s`,
-                "--dur": `${4.5 + (original % 5) * 0.4}s`,
+                // `original` is the word's VISUAL position, so the stagger
+                // runs left to right even though the DOM is shuffled.
+                "--delay": `${(original * WORD_STEP_S).toFixed(2)}s`,
               } as React.CSSProperties
             }
           >
@@ -73,7 +81,7 @@ function FadeEssay({ text, note }: { text: string; note?: string }) {
       </div>
 
       <p className="mt-5 border-t border-phos/10 pt-3 text-[10px] tracked text-ink-dim">
-        This fragment cannot be copied. Read it.
+        The fragment writes itself out once, and cannot be copied. Read it.
       </p>
     </figure>
   );
@@ -116,7 +124,13 @@ function AltImage({
       {sourceComment ? (
         <div
           className="hidden"
-          dangerouslySetInnerHTML={{ __html: `<!-- ${sourceComment} -->` }}
+          dangerouslySetInnerHTML={{
+            // The payload has to be a real HTML comment for the puzzle to
+            // work, so this cannot be escaped — but "--" would let anything
+            // typed into the admin panel close the comment and become live
+            // markup. Neutralise the only sequence that can break out.
+            __html: `<!-- ${sourceComment.replace(/-{2,}/g, "–")} -->`,
+          }}
         />
       ) : null}
 

@@ -41,8 +41,8 @@ export type PublicLevel = {
   /** Hints this team has already unlocked, in order. */
   revealedHints: string[];
   hintsRemaining: number;
-  /** Whether the next hint costs time. */
-  nextHintCosts: boolean;
+  /** Minutes the next hint on this level will cost. 0 means it is free. */
+  nextHintCostMinutes: number;
   attempts: number;
   /** How long the answer is. Null when the level opts out. */
   answerShape: AnswerShape | null;
@@ -88,6 +88,10 @@ export type Me = {
   team: TeamSummary | null;
   event: EventInfo;
   maxTeamSize: number;
+  /** How many locks the hunt holds. Not a secret — the rail shows it. */
+  totalLevels: number;
+  /** Aggregate only — how many teams exist. No names, no progress. */
+  teamsRegistered: number;
   /** Which sign-in routes are actually usable on this deployment. */
   auth: { google: boolean; mock: boolean };
   /**
@@ -115,7 +119,18 @@ export type TeamState = {
   rail: RailEntry[];
   /** Epoch ms until which answering is rate-limited, if any. */
   lockedUntil: number | null;
-  hintPenaltyMinutes: number;
+  /** Hints allowed across the whole hunt, and how many are already spent. */
+  hintBudget: number;
+  hintsTaken: number;
+  /**
+   * The organisers' extraction instruction. Withheld until the team has
+   * actually finished — it is the vault page's reason to exist.
+   */
+  vaultNote: string | null;
+  /** The clock the leaderboard ranks on. Stops between solves. */
+  rankedMs: number;
+  /** Answers this team has already earned, for the chaining puzzles. */
+  keys: { id: number; codename: string; answer: string }[];
   event: EventInfo;
 };
 
@@ -164,6 +179,8 @@ export type AdminOverview = {
   };
   teams: AdminTeamRow[];
   admins: string[];
+  /** Shown on the vault page once a team finishes. */
+  vaultNote: string;
 };
 
 export type ApiError = { error: string; lockedUntil?: number; opensAt?: number };

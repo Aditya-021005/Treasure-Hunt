@@ -1,4 +1,11 @@
-import { HINT_PENALTY_MINUTES } from "@/content/levels";
+import {
+  COOLDOWN_MAX_SECONDS,
+  COOLDOWN_STEP_SECONDS,
+  HINT_BUDGET,
+  WRONG_PENALTY_MINUTES,
+  WRONG_STRIKES,
+  hintCostMinutes,
+} from "@/lib/rules";
 import { levelFrom, levelsOf, totalLevels } from "@/lib/levels";
 import type { DB } from "@/lib/store";
 import { answerShape, matchesAnswer } from "@/lib/answers";
@@ -23,10 +30,10 @@ import type {
 
 /** Minimum gap between two submissions from one team. */
 const MIN_GAP_MS = 700;
-/** Wrong answers allowed before a cooldown kicks in. */
-const STRIKES = 5;
-const COOLDOWN_STEP_MS = 15_000;
-const COOLDOWN_MAX_MS = 90_000;
+const STRIKES = WRONG_STRIKES;
+const COOLDOWN_STEP_MS = COOLDOWN_STEP_SECONDS * 1_000;
+const COOLDOWN_MAX_MS = COOLDOWN_MAX_SECONDS * 1_000;
+const WRONG_PENALTY_MS = WRONG_PENALTY_MINUTES * 60_000;
 
 export function cooldownFor(attempts: number): number {
   if (attempts === 0 || attempts % STRIKES !== 0) return 0;
@@ -34,6 +41,26 @@ export function cooldownFor(attempts: number): number {
 }
 
 /* ------------------------------- projection ----------------------- */
+
+/** Hints this team has unlocked across every level. */
+export function hintsTaken(team: Team): number {
+  return Object.values(team.hintsUsed).reduce((a, b) => a + b, 0);
+}
+
+/**
+ * The clock a team is actually RANKED on. Finished teams are timed to the
+ * finish; teams still playing are timed to their most recent solve, so
+ * sitting and thinking costs nothing. This is deliberately not the same as
+ * `elapsedMs`, which is the wall clock — the HUD shows both, because a
+ * team seeing only a running timer assumes it is being charged for it.
+ */
+export function rankedMs(team: Team): number {
+  const solveTimes = Object.values(team.solvedAt);
+  const lastSolve = solveTimes.length ? Math.max(...solveTimes) : null;
+  const start = team.startedAt ?? team.createdAt;
+  const end = team.finishedAt ?? lastSolve ?? start;
+  return Math.max(0, end - start) + team.penaltyMs;
+}
 
 export function elapsedMs(team: Team, now: number): number {
   if (team.startedAt === null) return team.penaltyMs;
@@ -107,7 +134,21 @@ export function toState(
     elapsedMs: elapsedMs(team, now),
     rail: rail(db, team),
     lockedUntil: team.lockedUntil > now ? team.lockedUntil : null,
-    hintPenaltyMinutes: HINT_PENALTY_MINUTES,
+    hintBudget: HINT_BUDGET,
+    hintsTaken: hintsTaken(team),
+    vaultNote:
+      team.level > totalLevels(db) ? (db.vaultNote?.trim() || null) : null,
+    rankedMs: rankedMs(team),
+    // Every answer feeds the next lock, so a team that lost its notes is
+    // stuck on bookkeeping rather than on the puzzle. These are answers
+    // they have already earned; nothing unsolved is included.
+    keys: levelsOf(db)
+      .filter((l) => l.id < team.level)
+      .map((l) => ({
+        id: l.id,
+        codename: l.codename,
+        answer: l.answers[0] ?? "",
+      })),
     event: publicWindow(now, override),
   };
 }
@@ -144,8 +185,16 @@ export function toPublicLevel(db: DB, team: Team, id: number): PublicLevel | nul
         }
       : undefined,
     revealedHints: level.hints.slice(0, revealed),
-    hintsRemaining: Math.max(0, level.hints.length - revealed),
-    nextHintCosts: revealed >= level.freeHints,
+    // The global budget can cut a level's ladder short even when the level
+    // itself still has hints left to give.
+    hintsRemaining: Math.min(
+      Math.max(0, level.hints.length - revealed),
+      Math.max(0, HINT_BUDGET - hintsTaken(team)),
+    ),
+    nextHintCostMinutes:
+      revealed >= level.freeHints
+        ? hintCostMinutes(revealed - level.freeHints)
+        : 0,
     attempts: team.attempts[String(id)] ?? 0,
     // Only the count — the answer itself never crosses this boundary.
     answerShape:
@@ -284,10 +333,18 @@ export async function submitAnswer(
     const cool = cooldownFor(attempts);
     if (cool > 0) t.lockedUntil = now + cool;
 
+    // The cooldown and the time penalty land on the same beat, so a team
+    // only ever gets told off once.
+    const penalised = attempts % STRIKES === 0;
+    if (penalised) t.penaltyMs += WRONG_PENALTY_MS;
+
+    const line = WRONG_LINES[attempts % WRONG_LINES.length];
     return {
       ok: true as const,
       correct: false as const,
-      message: WRONG_LINES[attempts % WRONG_LINES.length],
+      message: penalised
+        ? `${line} +${WRONG_PENALTY_MS / 60_000} min for guessing.`
+        : line,
       lockedUntil: cool > 0 ? t.lockedUntil : null,
       state: toState(db, t, db.users, userId, now, db.eventOverride ?? null),
     };
@@ -320,6 +377,8 @@ export async function checkGate(
     const level = levelFrom(db, levelId);
     if (!level?.gate)
       return { ok: false as const, error: "This level has no lock.", status: 400 };
+    if (t.lockedUntil > now)
+      return { ok: false as const, error: "Terminal cooling down.", status: 429 };
     if (now - t.lastAttemptAt < MIN_GAP_MS)
       return { ok: false as const, error: "Slow down.", status: 429 };
 
@@ -332,6 +391,15 @@ export async function checkGate(
       got.length === want.length && want.every((id, i) => id === got[i]);
 
     if (!match) {
+      // Every other guess in the hunt costs something; this one used to be
+      // free, which made the grid the one place worth brute-forcing.
+      const attempts = (t.attempts[String(levelId)] ?? 0) + 1;
+      t.attempts[String(levelId)] = attempts;
+      const cool = cooldownFor(attempts);
+      if (cool > 0) {
+        t.lockedUntil = now + cool;
+        t.penaltyMs += WRONG_PENALTY_MS;
+      }
       return {
         ok: true as const,
         opened: false as const,
@@ -345,7 +413,7 @@ export async function checkGate(
 }
 
 export type HintResult =
-  | { ok: true; level: PublicLevel; state: TeamState; charged: boolean }
+  | { ok: true; level: PublicLevel; state: TeamState; chargedMinutes: number }
   | { ok: false; error: string; status: number };
 
 export async function unlockHint(
@@ -375,17 +443,25 @@ export async function unlockHint(
         error: "No hints left on this transmission.",
         status: 400,
       };
+    if (hintsTaken(t) >= HINT_BUDGET)
+      return {
+        ok: false as const,
+        error: `Your hint budget is spent — ${HINT_BUDGET} for the whole hunt.`,
+        status: 400,
+      };
 
     ensureStarted(t, now);
-    const charged = used >= level.freeHints;
+    // Free hints first, then the ladder, counted per level.
+    const chargedMinutes =
+      used >= level.freeHints ? hintCostMinutes(used - level.freeHints) : 0;
     t.hintsUsed[String(levelId)] = used + 1;
-    if (charged) t.penaltyMs += HINT_PENALTY_MINUTES * 60_000;
+    t.penaltyMs += chargedMinutes * 60_000;
 
     return {
       ok: true as const,
       level: toPublicLevel(db, t, levelId)!,
       state: toState(db, t, db.users, userId, now, db.eventOverride ?? null),
-      charged,
+      chargedMinutes,
     };
   });
 }
@@ -399,19 +475,14 @@ export async function leaderboard(
     Object.values(db.teams).map((t) => {
       const total = totalLevels(db);
       const solved = Math.min(t.level - 1, total);
-      const solveTimes = Object.values(t.solvedAt);
-      const lastSolve = solveTimes.length ? Math.max(...solveTimes) : null;
-      // Finished teams are timed to the finish; teams still playing are
-      // timed to their most recent solve, so sitting idle costs nothing.
       const start = t.startedAt ?? t.createdAt;
-      const end = t.finishedAt ?? lastSolve ?? start;
       return {
         id: t.id,
         name: t.name,
         solved,
         totalLevels: total,
         finished: t.finishedAt !== null,
-        timeMs: Math.max(0, end - start) + t.penaltyMs,
+        timeMs: rankedMs(t),
         hintsUsed: Object.values(t.hintsUsed).reduce((a, b) => a + b, 0),
         startedAt: start,
       };

@@ -2,6 +2,7 @@ import { publicWindow } from "@/lib/event";
 import { isAdminEmail } from "@/lib/admin";
 import { googleConfigured, mockAuthEnabled, type GoogleIdentity } from "@/lib/oauth";
 import { toTeamSummary } from "@/lib/hunt";
+import { totalLevels } from "@/lib/levels";
 import {
   blankTeam,
   blankUser,
@@ -62,6 +63,8 @@ export async function getMe(
       team: null,
       event: publicWindow(now, db.eventOverride ?? null),
       maxTeamSize: MAX_TEAM_SIZE,
+      totalLevels: totalLevels(db),
+      teamsRegistered: Object.keys(db.teams).length,
       auth: { google: googleConfigured(), mock: mockAuthEnabled() },
       storageReady: storageReady(),
       preview,

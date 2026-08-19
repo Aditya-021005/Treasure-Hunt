@@ -67,8 +67,14 @@ export type Level = {
   successNote: string;
 };
 
-/** Minutes added to a team's elapsed time for each penalised hint. */
-export const HINT_PENALTY_MINUTES = 3;
+/*
+ * The scoring dials — hint budget, hint costs, wrong-answer penalties —
+ * live in `src/lib/rules.ts`. They are NOT re-exported from here on
+ * purpose: the briefing page has to quote them and is a client component,
+ * and scripts/check-leaks.mjs imports this file with bare Node, which
+ * resolves neither the "@/" alias nor an extensionless relative path.
+ * Numbers there, secrets here.
+ */
 
 export const LEVELS: Level[] = [
   /* ---------------------------------------------------------------- */
@@ -152,17 +158,17 @@ export const LEVELS: Level[] = [
         "Your last answer has five letters. Five of these plates begin with them. Select those five — in order.",
       tiles: [
         { id: "banjo", glyph: "🪕", label: "Plate 01" },
-        { id: "nepal", glyph: "🇳🇵", label: "Plate 02" },
+        { id: "nose", glyph: "👃", label: "Plate 02" },
         { id: "moon", glyph: "🌙", label: "Plate 03" },
         { id: "arrow", glyph: "➡️", label: "Plate 04" },
-        { id: "ironman", glyph: "🦸", label: "Plate 05" },
+        { id: "owl", glyph: "🦉", label: "Plate 05" },
         { id: "penguin", glyph: "🐧", label: "Plate 06" },
         { id: "llama", glyph: "🦙", label: "Plate 07" },
         { id: "heart", glyph: "❤️", label: "Plate 08" },
         { id: "joker", glyph: "🃏", label: "Plate 09" },
         { id: "umbrella", glyph: "☂️", label: "Plate 10" },
       ],
-      sequence: ["heart", "umbrella", "moon", "arrow", "nepal"],
+      sequence: ["heart", "umbrella", "moon", "arrow", "nose"],
       rewardCaption:
         "The five are numbered one to five in the order you found them. Two of them are now shown to you. Read them as digits.",
       reward: [
@@ -172,7 +178,7 @@ export const LEVELS: Level[] = [
     },
     hints: [
       "H, U, M, A, N. Name each plate out loud and listen to its first letter.",
-      "Heart, Umbrella, Moon, Arrow, Nepal. That order gives them the numbers one through five.",
+      "Heart, Umbrella, Moon, Arrow, Nose. That order gives them the numbers one through five.",
       "The two revealed plates are the fourth and the second. Write the digits side by side.",
     ],
     freeHints: 1,
@@ -233,7 +239,9 @@ export const LEVELS: Level[] = [
       "The description is enciphered by reflection: the first letter becomes the last, the second becomes the second-last.",
       "GSV → THE. The sentence names its own answer, and the answer is four letters long.",
     ],
-    freeHints: 0,
+    // Was 0. Under the escalating ladder that made this one lock cost
+    // 5 + 12 + 12 = 29 minutes, which is more than the rest of the hunt.
+    freeHints: 1,
     answers: ["bosm"],
     successNote:
       "The vault is open. Nothing left to decode — take the word to the desk.",

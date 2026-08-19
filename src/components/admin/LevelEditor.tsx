@@ -113,7 +113,7 @@ export default function LevelEditor({
         <span className="text-[10px] tracked text-ink-dim">
           {levels.length} locks · {custom ? "saved in the database" : "from the code seed"}
         </span>
-        <div className="ml-auto flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
           <Btn
             type="button"
             variant="ghost"

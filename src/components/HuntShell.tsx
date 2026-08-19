@@ -42,12 +42,16 @@ export default function HuntShell() {
     finished: boolean;
     next: PublicLevel | null;
   } | null>(null);
-  const [confirm, setConfirm] = useState<"exit" | "signout" | null>(null);
+  const [confirm, setConfirm] = useState<"exit" | "signout" | "hint" | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const inputRef = useRef<HTMLInputElement>(null);
+  /** Which lock the screen is currently showing, readable from callbacks. */
+  const shownLevelRef = useRef<number | null>(null);
+  /** Set while a request of our own is in flight, or a modal is up. */
+  const pausePollRef = useRef(false);
 
   /* --------------------------- bootstrap -------------------------- */
 
@@ -80,6 +84,70 @@ export default function HuntShell() {
     };
   }, [router]);
 
+  /* ------------------------------ sync ---------------------------- */
+
+  /**
+   * Teams share one run across devices, so the screen has to be told when
+   * somebody else moves it. Without this a teammate one lock behind
+   * submits, gets a 403, and — because 403 used to mean "signed out" — is
+   * thrown back to the briefing page for no visible reason.
+   */
+  type SyncResult = "moved" | "same" | "denied" | "error";
+
+  const sync = useCallback(async (): Promise<SyncResult> => {
+    try {
+      const res = await fetch("/api/state", { cache: "no-store" });
+      if (!res.ok) return "denied";
+      const data = await res.json();
+      const was = shownLevelRef.current;
+      setState(data.state);
+      setLevel(data.level);
+      if (data.level && was !== null && data.level.id !== was) {
+        setAnswer("");
+        return "moved";
+      }
+      return "same";
+    } catch {
+      return "error";
+    }
+  }, []);
+
+  useEffect(() => {
+    shownLevelRef.current = level?.id ?? null;
+  }, [level?.id]);
+
+  const finished = state?.finished ?? false;
+
+  useEffect(() => {
+    if (loading || finished) return;
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
+      if (pausePollRef.current) return;
+      void sync();
+    };
+    const id = setInterval(tick, 10_000);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", tick);
+    };
+  }, [loading, finished, sync]);
+
+  /* --------------------------- CRT decay -------------------------- */
+
+  /* The terminal degrades as the team gets deeper: scanlines thicken and
+     the flicker comes round more often. Level 1 looks exactly as it always
+     did; the stylesheet clamps this back to 0 under reduced motion. */
+  useEffect(() => {
+    const root = document.documentElement;
+    const span = Math.max(1, (state?.totalLevels ?? 1) - 1);
+    const depth = Math.min(1, Math.max(0, ((state?.level ?? 1) - 1) / span));
+    root.style.setProperty("--crt", String(depth.toFixed(3)));
+    return () => {
+      root.style.removeProperty("--crt");
+    };
+  }, [state?.level, state?.totalLevels]);
+
   /* ------------------------------ clock --------------------------- */
 
   useEffect(() => {
@@ -90,6 +158,10 @@ export default function HuntShell() {
 
   const cooldownLeft = state?.lockedUntil
     ? Math.max(0, Math.ceil((state.lockedUntil - now) / 1000))
+    : 0;
+
+  const budgetLeft = state
+    ? Math.max(0, state.hintBudget - state.hintsTaken)
     : 0;
 
   const elapsed = state
@@ -105,6 +177,7 @@ export default function HuntShell() {
       e.preventDefault();
       if (!level || busy || !answer.trim()) return;
       setBusy(true);
+      pausePollRef.current = true;
       setFeedback(null);
       try {
         const res = await fetch("/api/answer", {
@@ -114,8 +187,25 @@ export default function HuntShell() {
         });
         const data = await res.json();
 
-        if (res.status === 401 || res.status === 403) {
+        if (res.status === 401) {
           router.replace("/");
+          return;
+        }
+        // 403 is ambiguous: it covers "signed out", "hunt closed" AND
+        // "your team already opened this lock". Ask the server which.
+        if (res.status === 403) {
+          const r = await sync();
+          if (r === "denied") {
+            router.replace("/");
+            return;
+          }
+          setFeedback({
+            kind: "info",
+            text:
+              r === "moved"
+                ? "A teammate opened that lock while you were typing. Here is the next one."
+                : (data.error ?? "That lock is not open to you."),
+          });
           return;
         }
         if (!res.ok) {
@@ -145,14 +235,16 @@ export default function HuntShell() {
         setFeedback({ kind: "error", text: "Connection lost. Try again." });
       } finally {
         setBusy(false);
+        pausePollRef.current = false;
       }
     },
-    [answer, busy, level, router, state],
+    [answer, busy, level, router, state, sync],
   );
 
   const takeHint = useCallback(async () => {
     if (!level || hinting || busy) return;
     setHinting(true);
+    pausePollRef.current = true;
     try {
       const res = await fetch("/api/hint", {
         method: "POST",
@@ -160,21 +252,41 @@ export default function HuntShell() {
         body: JSON.stringify({ level: level.id }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        router.replace("/");
+        return;
+      }
+      if (res.status === 403) {
+        const r = await sync();
+        if (r === "denied") {
+          router.replace("/");
+          return;
+        }
+        setFeedback({
+          kind: "info",
+          text:
+            r === "moved"
+              ? "A teammate opened that lock. No hint spent."
+              : (data.error ?? "That lock is not open to you."),
+        });
+        return;
+      }
       if (!res.ok) {
         setFeedback({ kind: "error", text: data.error ?? "No hint available." });
         return;
       }
       setLevel(data.level);
       setState(data.state);
-      if (data.charged)
+      if (data.chargedMinutes > 0)
         setFeedback({
           kind: "info",
-          text: `Hint unlocked. +${state?.hintPenaltyMinutes ?? 3} min added to your time.`,
+          text: `Hint unlocked. +${data.chargedMinutes} min added to your time.`,
         });
     } finally {
       setHinting(false);
+      pausePollRef.current = false;
     }
-  }, [busy, hinting, level, state?.hintPenaltyMinutes]);
+  }, [busy, hinting, level, router, sync]);
 
   const signOut = useCallback(async () => {
     setSigningOut(true);
@@ -262,6 +374,16 @@ export default function HuntShell() {
                 +{Math.round(state.penaltyMs / 60000)}m
               </span>
             )}
+          </p>
+        </div>
+
+        {/* The board does not rank on the wall clock — it stops at your
+            last solve. Showing only the running one makes teams think
+            they are being charged for thinking. */}
+        <div title="What the leaderboard ranks you on. It stops between solves.">
+          <p className="text-[10px] tracked text-ink-dim">Ranked</p>
+          <p className="text-[14px] tabular-nums text-phos">
+            {formatDuration(state.rankedMs)}
           </p>
         </div>
 
@@ -435,9 +557,13 @@ export default function HuntShell() {
             <div className="panel notch brackets p-4">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] tracked text-ink-dim">Hints</p>
-                <p className="text-[10px] tracked text-ink-dim">
-                  {level.revealedHints.length}/
-                  {level.revealedHints.length + level.hintsRemaining}
+                <p
+                  className={`text-[10px] tracked ${
+                    budgetLeft === 0 ? "text-danger" : "text-ink-dim"
+                  }`}
+                  title="Hints left for the whole hunt"
+                >
+                  {budgetLeft}/{state.hintBudget} left
                 </p>
               </div>
 
@@ -457,22 +583,61 @@ export default function HuntShell() {
                 )}
               </ul>
 
-              {level.hintsRemaining > 0 && (
+              {level.hintsRemaining > 0 ? (
                 <Btn
                   type="button"
                   variant="ghost"
-                  onClick={takeHint}
+                  onClick={() =>
+                    level.nextHintCostMinutes > 0
+                      ? setConfirm("hint")
+                      : takeHint()
+                  }
                   loading={hinting}
                   loadingLabel="Decrypting"
                   disabled={busy}
                   className="mt-4 w-full"
                 >
-                  {level.nextHintCosts
-                    ? `Reveal (+${state.hintPenaltyMinutes} min)`
+                  {level.nextHintCostMinutes > 0
+                    ? `Reveal (+${level.nextHintCostMinutes} min)`
                     : "Reveal hint"}
                 </Btn>
+              ) : (
+                <p className="mt-4 text-[11px] leading-relaxed text-ink-dim italic">
+                  {budgetLeft === 0
+                    ? "Hint budget spent. The rest of the hunt is yours alone."
+                    : "Nothing further on this lock."}
+                </p>
               )}
+
+              <p className="mt-3 border-t border-phos/10 pt-2.5 text-[10px] leading-relaxed tracked text-ink-dim">
+                {state.hintBudget} hints for the whole hunt. They get dearer
+                each time you go back to the same lock.
+              </p>
             </div>
+
+            {state.keys.length > 0 && (
+              <div className="panel notch brackets p-4">
+                <p className="text-[10px] tracked text-ink-dim">Keys recovered</p>
+                <ul className="mt-3 flex flex-col gap-2">
+                  {state.keys.map((k) => (
+                    <li key={k.id} className="flex items-baseline gap-2">
+                      <span className="text-[9px] tracked text-ink-dim/70">
+                        {pad2(k.id)}
+                      </span>
+                      <span className="text-[9px] tracked text-ink-dim/70">
+                        {k.codename}
+                      </span>
+                      <span className="ml-auto text-[13px] text-phos">
+                        {k.answer}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 border-t border-phos/10 pt-2.5 text-[10px] leading-relaxed tracked text-ink-dim">
+                  Every answer feeds the next lock. Yours are kept here.
+                </p>
+              </div>
+            )}
 
             <Notepad teamKey={state.team.name} />
 
@@ -499,6 +664,22 @@ export default function HuntShell() {
         cancelLabel="Stay here"
         loading={leaving}
         onConfirm={leaveTerminal}
+        onCancel={() => setConfirm(null)}
+      />
+
+      <ConfirmModal
+        open={confirm === "hint"}
+        title={`Spend a hint on ${level?.codename ?? "this lock"}?`}
+        body={`This is one of your ${state.hintBudget} hints for the whole hunt, and you have ${budgetLeft} left. There is no way to get it back.`}
+        note={`+${level?.nextHintCostMinutes ?? 0} minutes will be added to your time.`}
+        confirmLabel="Spend it"
+        confirmingLabel="Decrypting"
+        cancelLabel="Keep thinking"
+        loading={hinting}
+        onConfirm={() => {
+          setConfirm(null);
+          void takeHint();
+        }}
         onCancel={() => setConfirm(null)}
       />
 
@@ -551,8 +732,18 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
       <h1 className="mt-3 text-3xl text-phos glow sm:text-4xl">Hunt complete</h1>
       <p className="mx-auto mt-4 max-w-prose text-[14px] leading-relaxed text-ink/85">
         {state.totalLevels} locks, {state.totalLevels} keys. {state.team.name} is
-        through — carry the last word to the desk.
+        through.
       </p>
+
+      {/* The point of this page: something the answer box did not already
+          give them. Organisers set it from the admin panel. */}
+      <div className="notch mt-7 border border-phos/30 bg-phos/[0.06] px-5 py-6 text-left sm:px-7">
+        <p className="text-[10px] tracked text-phos glow">Extraction</p>
+        <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-ink">
+          {state.vaultNote ??
+            "Find an organiser and say the last word out loud. They are expecting it."}
+        </p>
+      </div>
 
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-phos/15 bg-phos/15 sm:grid-cols-3">
         {[

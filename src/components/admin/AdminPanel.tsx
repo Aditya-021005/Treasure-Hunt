@@ -33,6 +33,7 @@ export default function AdminPanel() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [lockAt, setLockAt] = useState("");
+  const [vaultNote, setVaultNote] = useState<string | null>(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
   const [wipeText, setWipeText] = useState("");
   const [pending, setPending] = useState<
@@ -176,15 +177,15 @@ export default function AdminPanel() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-2">
+      <header className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-3">
         <div>
           <p className="text-[10px] tracked text-amber">Control</p>
-          <h1 className="mt-1 text-3xl text-phos glow">Admin</h1>
+          <h1 className="mt-1 text-2xl text-phos glow sm:text-3xl">Admin</h1>
         </div>
-        <p className="text-[10px] tracked text-ink-dim">
+        <p className="max-w-full truncate text-[10px] tracked text-ink-dim">
           signed in as {data.you.email}
         </p>
-        <div className="ml-auto flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
           <a href="/api/admin/export" className="btn btn-ghost notch">
             Export CSV
           </a>
@@ -245,7 +246,7 @@ export default function AdminPanel() {
           </span>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <Btn
             type="button"
             onClick={() => post("/api/admin/event", { action: "open" }, "The hunt is open.")}
@@ -259,13 +260,13 @@ export default function AdminPanel() {
             <label htmlFor="lockAt" className="mb-1.5 block text-[10px] tracked text-ink-dim">
               Or seal until (your local time)
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <input
                 id="lockAt"
                 type="datetime-local"
                 value={lockAt}
                 onChange={(e) => setLockAt(e.target.value)}
-                className="field notch text-[13px]"
+                className="field notch min-w-0 flex-1 text-[13px]"
               />
               <Btn
                 type="button"
@@ -308,6 +309,59 @@ export default function AdminPanel() {
         </div>
       </section>
 
+      {/* ------------------------------- vault ---------------------- */}
+      <section className="panel notch brackets mb-6 p-4 sm:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-[10px] tracked text-phos">Vault page</h2>
+          <span className="text-[10px] tracked text-ink-dim">
+            {data.vaultNote ? "set here" : "using the built-in line"}
+          </span>
+        </div>
+
+        <p className="mt-2 max-w-prose text-[12px] leading-relaxed text-ink-dim">
+          The last thing a team reads, once every lock is open. Give them
+          somewhere to go and someone to say the word to — otherwise the final
+          answer box has told them everything this page can.
+        </p>
+
+        <textarea
+          id="vaultNote"
+          rows={3}
+          maxLength={600}
+          value={vaultNote ?? data.vaultNote}
+          onChange={(e) => setVaultNote(e.target.value)}
+          placeholder="Bring the word to the BEP desk outside the Auditorium before 6pm."
+          className="field notch mt-3 w-full text-[13px]"
+        />
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Btn
+            type="button"
+            loading={busy}
+            disabled={vaultNote === null || vaultNote === data.vaultNote}
+            onClick={async () => {
+              await post(
+                "/api/admin/vault",
+                { note: vaultNote ?? "" },
+                "Vault page updated.",
+              );
+              setVaultNote(null);
+            }}
+          >
+            Save
+          </Btn>
+          {vaultNote !== null && vaultNote !== data.vaultNote && (
+            <button
+              type="button"
+              onClick={() => setVaultNote(null)}
+              className="text-[10px] tracked text-ink-dim underline-offset-4 hover:text-phos hover:underline"
+            >
+              discard changes
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* ------------------------------- puzzles -------------------- */}
       <div className="mb-6">
         <LevelEditor
@@ -318,7 +372,7 @@ export default function AdminPanel() {
       </div>
 
       {/* -------------------------------- teams --------------------- */}
-      <section className="panel notch brackets mb-6 overflow-x-auto">
+      <section className="panel notch brackets mb-6">
         <div className="flex items-center gap-3 border-b border-phos/12 px-4 py-3">
           <h2 className="text-[10px] tracked text-phos">Teams</h2>
           <span className="text-[10px] tracked text-ink-dim">
@@ -331,7 +385,66 @@ export default function AdminPanel() {
             Nobody has registered yet.
           </p>
         ) : (
-          <table className="w-full min-w-[760px] border-collapse text-left">
+          <>
+          {/* Phones get cards; a 7-column table cannot be made to fit and
+              a horizontally scrolling one is unusable on the day. */}
+          <ul className="flex flex-col divide-y divide-phos/8 lg:hidden">
+            {data.teams.map((t) => (
+              <li key={t.id} className="flex flex-col gap-2 px-4 py-4">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-[14px] text-ink">{t.name}</span>
+                  <span className="text-[12px] tracking-widest text-phos">
+                    {t.code}
+                  </span>
+                  <span className="ml-auto text-[13px] tabular-nums text-ink">
+                    {pad2(t.solved)}/{pad2(t.totalLevels)}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] tracked text-ink-dim">
+                  <span>
+                    {t.startedAt ? "playing" : "not started"}
+                    {t.finishedAt ? " · cleared" : ""}
+                  </span>
+                  <span className="tabular-nums">
+                    {t.startedAt ? formatDuration(t.timeMs) : "—"}
+                  </span>
+                  <span className="tabular-nums">{t.hintsUsed} hints</span>
+                </div>
+
+                <ul className="flex flex-col gap-0.5">
+                  {t.members.map((m) => (
+                    <li key={m.email} className="text-[11px] text-ink-dim">
+                      {m.name}
+                      {m.isCaptain && <span className="text-amber"> ·c</span>}
+                      <span className="block text-[9px] break-all opacity-60">
+                        {m.email}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-1 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPending({ team: t, action: "reset" })}
+                    className="flex-1 border border-phos/25 px-2 py-2 text-[9px] tracked text-phos hover:bg-phos/10"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPending({ team: t, action: "delete" })}
+                    className="flex-1 border border-danger/30 px-2 py-2 text-[9px] tracked text-danger hover:bg-danger/10"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <table className="hidden w-full border-collapse text-left lg:table">
             <thead>
               <tr className="border-b border-phos/12 text-[9px] tracked text-ink-dim">
                 <th className="px-4 py-2 font-normal">Team</th>
@@ -398,6 +511,7 @@ export default function AdminPanel() {
               ))}
             </tbody>
           </table>
+          </>
         )}
       </section>
 

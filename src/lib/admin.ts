@@ -109,6 +109,7 @@ export async function overview(): Promise<AdminOverview> {
       },
       teams,
       admins: adminEmails(),
+      vaultNote: db.vaultNote ?? "",
     };
   });
 }
@@ -121,6 +122,14 @@ export async function setEventWindow(
 ): Promise<void> {
   await transact((db) => {
     db.eventOverride = { opensAt, closesAt };
+  });
+}
+
+/** The last screen of the hunt. Empty string clears it. */
+export async function setVaultNote(text: string): Promise<void> {
+  const clean = text.trim().slice(0, 600);
+  await transact((db) => {
+    db.vaultNote = clean || null;
   });
 }
 

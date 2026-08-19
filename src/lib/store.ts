@@ -70,6 +70,12 @@ type DB = {
   eventOverride?: { opensAt: number | null; closesAt: number | null } | null;
   /** Puzzles edited in the admin panel; empty = use the shipped seed. */
   levels?: import("@/content/levels").Level[];
+  /**
+   * What the vault page tells a team once every lock is open — where to
+   * physically go and who to say the last word to. Set from the admin
+   * panel so it can change on the day without a deploy.
+   */
+  vaultNote?: string | null;
   users: Record<string, User>;
   teams: Record<string, Team>;
   /** google sub -> user id */
@@ -87,6 +93,7 @@ const EMPTY: DB = {
   version: 2,
   eventOverride: null,
   levels: [],
+  vaultNote: null,
   users: {},
   teams: {},
   userBySub: {},
