@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Bits, literally: columns of ones and zeroes drifting down behind the
- * page. Deliberately faint — it is texture, not decoration you look at.
+ * Embers off whatever is burning below. Sparks climb, wander, cool from
+ * white through orange to a dull red, and go out.
  *
- * Cheap by design: ~28px columns, capped at 30fps, one canvas, and it
- * shuts off entirely for prefers-reduced-motion.
+ * Cheap by design: a bounded particle count, capped at 30fps, one canvas,
+ * and it shuts off entirely for prefers-reduced-motion.
  */
 export default function BitStream() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -20,27 +20,48 @@ export default function BitStream() {
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    const COL = 28; // px between columns
-    const STEP = 20; // px per glyph
-    let cols = 0;
-    let heads: number[] = [];
-    let speeds: number[] = [];
+    type Spark = {
+      x: number; y: number; r: number;
+      vx: number; vy: number;
+      life: number; max: number;
+    };
+    let sparks: Spark[] = [];
     let raf = 0;
     let last = 0;
+    let W = 0;
+    let H = 0;
+
+    /* Born along the bottom edge, because that is where the fire is. */
+    const spawn = (): Spark => {
+      const max = 160 + Math.random() * 260;
+      return {
+        x: Math.random() * W,
+        y: H + Math.random() * 40,
+        r: 0.6 + Math.random() * 1.9,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: -(0.5 + Math.random() * 1.5),
+        life: 0,
+        max,
+      };
+    };
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = `${W}px`;
+      canvas.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, monospace";
-      ctx.textBaseline = "top";
-
-      cols = Math.ceil(window.innerWidth / COL);
-      heads = Array.from({ length: cols }, () => -Math.random() * window.innerHeight);
-      speeds = Array.from({ length: cols }, () => 0.35 + Math.random() * 0.75);
+      const count = Math.min(120, Math.round((W * H) / 16000));
+      sparks = Array.from({ length: count }, () => {
+        const s = spawn();
+        // Stagger the first generation so they do not all rise together.
+        s.y = Math.random() * H;
+        s.life = Math.random() * s.max;
+        return s;
+      });
     };
 
     const frame = (t: number) => {
@@ -48,24 +69,39 @@ export default function BitStream() {
       if (t - last < 33) return; // ~30fps
       last = t;
 
-      const h = window.innerHeight;
-      // Fade the previous frame rather than clearing: leaves a soft trail.
-      ctx.fillStyle = "rgba(4, 7, 10, 0.28)";
-      ctx.fillRect(0, 0, window.innerWidth, h);
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
 
-      for (let i = 0; i < cols; i++) {
-        const x = i * COL + 6;
-        const y = heads[i];
-        const bit = Math.random() > 0.5 ? "1" : "0";
+      for (let i = 0; i < sparks.length; i++) {
+        const s = sparks[i];
+        s.life += 1;
+        if (s.life > s.max || s.y < -10) {
+          sparks[i] = spawn();
+          continue;
+        }
 
-        ctx.fillStyle = "rgba(53, 255, 155, 0.42)";
-        ctx.fillText(bit, x, y);
-        ctx.fillStyle = "rgba(53, 255, 155, 0.13)";
-        ctx.fillText(Math.random() > 0.5 ? "1" : "0", x, y - STEP);
+        // Sparks wander as they rise, and slow as they cool.
+        s.vx += (Math.random() - 0.5) * 0.06;
+        s.vx = Math.max(-0.8, Math.min(0.8, s.vx));
+        s.vy *= 0.995;
+        s.x += s.vx;
+        s.y += s.vy;
 
-        heads[i] += STEP * speeds[i];
-        if (heads[i] > h + STEP) heads[i] = -Math.random() * h * 0.5;
+        const k = s.life / s.max;          // 0 hot, 1 spent
+        const a = Math.sin((1 - k) * Math.PI * 0.5) * 0.85;
+        const g = Math.round(90 + (1 - k) * 130);
+        const b = Math.round(20 + (1 - k) * 90);
+
+        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
+        glow.addColorStop(0, `rgba(255, ${g}, ${b}, ${a})`);
+        glow.addColorStop(1, "rgba(255, 60, 0, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2);
+        ctx.fill();
       }
+
+      ctx.globalCompositeOperation = "source-over";
     };
 
     resize();
@@ -82,7 +118,7 @@ export default function BitStream() {
     <canvas
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 opacity-[0.13] mix-blend-screen"
+      className="pointer-events-none fixed inset-0 z-0 opacity-[0.75] mix-blend-screen"
     />
   );
 }

@@ -7,7 +7,7 @@ type Props = {
   open: boolean;
   title: string;
   body: string;
-  /** Extra line rendered in amber, for the consequence of confirming. */
+  /** Extra line rendered in gold, for the consequence of confirming. */
   note?: string;
   confirmLabel: string;
   confirmingLabel?: string;
@@ -115,9 +115,9 @@ export default function ConfirmModal({
         aria-describedby={bodyId}
         className="panel notch brackets pop-3d w-full max-w-md p-6 sm:p-8"
       >
-        <p className="text-[10px] tracked text-amber glow-amber">Confirm</p>
+        <p className="text-[10px] tracked text-scale glow-scale">Confirm</p>
 
-        <h2 id={titleId} className="mt-3 text-xl text-phos glow sm:text-2xl">
+        <h2 id={titleId} className="mt-3 text-xl text-ember glow sm:text-2xl">
           {title}
         </h2>
 
@@ -125,7 +125,7 @@ export default function ConfirmModal({
           {body}
         </p>
 
-        {note && <p className="mt-3 text-[13px] text-amber italic">{note}</p>}
+        {note && <p className="mt-3 text-[13px] text-scale italic">{note}</p>}
 
         <div className="mt-7 flex flex-col-reverse gap-2.5 sm:flex-row">
           <Btn

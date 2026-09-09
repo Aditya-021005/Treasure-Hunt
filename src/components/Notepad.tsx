@@ -46,10 +46,10 @@ export default function Notepad({ teamKey }: { teamKey: string }) {
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        className="flex w-full items-center justify-between text-[10px] tracked text-ink-dim transition-colors hover:text-phos"
+        className="flex w-full items-center justify-between text-[10px] tracked text-ink-dim transition-colors hover:text-ember"
       >
         <span>Scratchpad</span>
-        <span aria-hidden className="text-phos/60">
+        <span aria-hidden className="text-ember/60">
           {open ? "−" : "+"}
         </span>
       </button>

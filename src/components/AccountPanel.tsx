@@ -62,7 +62,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
         onChanged();
         return true;
       } catch {
-        setError("Could not reach the server.");
+        setError("Nothing answers from below.");
         return false;
       } finally {
         setBusy(false);
@@ -71,7 +71,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
     [onChanged],
   );
 
-  // A preview pass opens the terminal without opening the event.
+  // A preview pass opens the dig without opening the event.
   const open = me.event.phase === "open" || me.preview;
 
   /* ------------------------------ signed out ---------------------- */
@@ -79,7 +79,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
   if (!me.user) {
     return (
       <div className="panel notch brackets w-full p-5 sm:p-7" id="join">
-        <p className="text-[10px] tracked text-phos glow">Registration</p>
+        <p className="text-[10px] tracked text-ember glow">Registration</p>
         <p className="mt-2 text-[13px] leading-relaxed text-ink-dim">
           Sign in with your BITS Google account. One account per person —
           create a team or join your captain&apos;s with their code.
@@ -102,7 +102,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
             Sign in with Google
           </a>
         ) : (
-          <p className="mt-6 border border-amber/30 bg-amber/5 px-4 py-3 text-[12px] leading-relaxed text-amber">
+          <p className="mt-6 border border-scale/30 bg-scale/5 px-4 py-3 text-[12px] leading-relaxed text-scale">
             Google sign-in is not configured on this server. Set
             GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.
           </p>
@@ -124,7 +124,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
       <div className="panel notch brackets w-full p-5 sm:p-7" id="join">
         <Who me={me} onSignOut={() => setConfirmOut(true)} />
 
-        <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden border border-phos/20 bg-phos/20">
+        <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden border border-ember/20 bg-ember/20">
           {(["create", "join"] as const).map((m) => (
             <button
               key={m}
@@ -135,8 +135,8 @@ export default function AccountPanel({ me, onChanged }: Props) {
               }}
               className={`px-3 py-2.5 text-[10px] tracked transition-colors ${
                 mode === m
-                  ? "bg-phos/15 text-phos"
-                  : "bg-panel text-ink-dim hover:text-phos"
+                  ? "bg-ember/15 text-ember"
+                  : "bg-panel text-ink-dim hover:text-ember"
               }`}
             >
               {m === "create" ? "Create a team" : "Join with code"}
@@ -240,12 +240,12 @@ export default function AccountPanel({ me, onChanged }: Props) {
       <div className="panel notch brackets w-full p-5 sm:p-7" id="join">
         <Who me={me} onSignOut={() => setConfirmOut(true)} />
 
-        <p className="mt-5 truncate text-2xl text-phos glow">{team.name}</p>
+        <p className="mt-5 truncate text-2xl text-ember glow">{team.name}</p>
 
-        <div className="mt-4 flex items-center gap-3 border border-phos/20 bg-panel-2 px-4 py-3">
+        <div className="mt-4 flex items-center gap-3 border border-ember/20 bg-panel-2 px-4 py-3">
           <div className="min-w-0">
             <p className="text-[9px] tracked text-ink-dim">Join code</p>
-            <p className="text-xl tracking-[0.3em] text-phos glow">{team.code}</p>
+            <p className="text-xl tracking-[0.3em] text-ember glow">{team.code}</p>
           </div>
           <CopyCode code={team.code} />
         </div>
@@ -258,13 +258,13 @@ export default function AccountPanel({ me, onChanged }: Props) {
             {team.members.map((m) => (
               <li
                 key={m.email}
-                className="flex items-baseline gap-2 border-l-2 border-l-phos/25 pl-3"
+                className="flex items-baseline gap-2 border-l-2 border-l-ember/25 pl-3"
               >
                 <span className="truncate text-[13px] text-ink">{m.name}</span>
                 {m.isCaptain && (
-                  <span className="text-[9px] tracked text-amber">captain</span>
+                  <span className="text-[9px] tracked text-scale">captain</span>
                 )}
-                {m.isYou && <span className="text-[9px] tracked text-phos/70">you</span>}
+                {m.isYou && <span className="text-[9px] tracked text-ember/70">you</span>}
               </li>
             ))}
           </ul>
@@ -281,13 +281,13 @@ export default function AccountPanel({ me, onChanged }: Props) {
             }}
             className="mt-6 w-full"
           >
-            {team.solved > 0 ? "Resume the hunt" : "Enter the terminal"}
+            {team.solved > 0 ? "Resume the hunt" : "Enter the dig"}
           </Btn>
         ) : (
-          <div className="mt-6 border border-amber/30 bg-amber/5 px-4 py-3 text-center">
-            <p className="text-[11px] tracked text-amber">
+          <div className="mt-6 border border-scale/30 bg-scale/5 px-4 py-3 text-center">
+            <p className="text-[11px] tracked text-scale">
               {me.event.phase === "before"
-                ? "You are registered · the terminal unlocks at the start"
+                ? "You are registered · the dig unlocks at the start"
                 : "The hunt has closed"}
             </p>
           </div>
@@ -356,7 +356,7 @@ function Who({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
     <div className="flex items-center gap-3">
       <span
         aria-hidden
-        className="grid h-8 w-8 shrink-0 place-items-center border border-phos/30 text-[13px] text-phos"
+        className="grid h-8 w-8 shrink-0 place-items-center border border-ember/30 text-[13px] text-ember"
       >
         {me.user.name.slice(0, 1).toUpperCase()}
       </span>
@@ -367,7 +367,7 @@ function Who({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       {me.isAdmin && (
         <a
           href="/admin"
-          className="shrink-0 border border-amber/40 px-2 py-1 text-[9px] tracked text-amber transition-colors hover:bg-amber/10"
+          className="shrink-0 border border-scale/40 px-2 py-1 text-[9px] tracked text-scale transition-colors hover:bg-scale/10"
         >
           Admin
         </a>
@@ -397,7 +397,7 @@ function CopyCode({ code }: { code: string }) {
           /* clipboard blocked — the code is on screen anyway */
         }
       }}
-      className="notch ml-auto shrink-0 border border-phos/30 px-3 py-2 text-[10px] tracked text-phos transition-colors hover:border-phos hover:bg-phos/10"
+      className="notch ml-auto shrink-0 border border-ember/30 px-3 py-2 text-[10px] tracked text-ember transition-colors hover:border-ember hover:bg-ember/10"
     >
       {done ? "Copied" : "Copy"}
     </button>
@@ -455,7 +455,7 @@ function MockSignIn({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   return (
     <form
-      className="mt-6 border border-amber/30 bg-amber/5 p-4"
+      className="mt-6 border border-scale/30 bg-scale/5 p-4"
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
@@ -468,7 +468,7 @@ function MockSignIn({ onDone }: { onDone: () => void }) {
         onDone();
       }}
     >
-      <p className="text-[10px] tracked text-amber">Dev sign-in (mock)</p>
+      <p className="text-[10px] tracked text-scale">Dev sign-in (mock)</p>
       <input
         value={email}
         onChange={(e) => setEmail(e.target.value)}

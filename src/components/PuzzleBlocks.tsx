@@ -54,7 +54,7 @@ function FadeEssay({ text, note }: { text: string; note?: string }) {
   return (
     <figure className="panel notch brackets p-5 sm:p-7">
       <figcaption className="mb-4 flex items-center gap-2 text-[10px] tracked text-ink-dim">
-        <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-amber" />
+        <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-scale" />
         {note ?? "unstable text"}
       </figcaption>
 
@@ -80,7 +80,7 @@ function FadeEssay({ text, note }: { text: string; note?: string }) {
         ))}
       </div>
 
-      <p className="mt-5 border-t border-phos/10 pt-3 text-[10px] tracked text-ink-dim">
+      <p className="mt-5 border-t border-ember/10 pt-3 text-[10px] tracked text-ink-dim">
         The fragment writes itself out once, and cannot be copied. Read it.
       </p>
     </figure>
@@ -98,15 +98,15 @@ const LANTERN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 26
 </radialGradient>
 </defs>
 <circle cx="100" cy="140" r="86" fill="url(#g)"/>
-<path d="M100 14c14 0 22 9 22 20 0 6-3 10-7 13h-30c-4-3-7-7-7-13 0-11 8-20 22-20z" fill="none" stroke="#2f5c4a" stroke-width="3"/>
-<rect x="60" y="47" width="80" height="12" rx="3" fill="#123024" stroke="#2f5c4a" stroke-width="2"/>
-<path d="M66 59h68l10 20H56z" fill="#0d2419" stroke="#2f5c4a" stroke-width="2"/>
-<rect x="56" y="79" width="88" height="112" rx="4" fill="#061019" stroke="#2f5c4a" stroke-width="2"/>
-<rect x="68" y="91" width="64" height="88" rx="2" fill="#0a1a12" stroke="#1d4433" stroke-width="1.5"/>
+<path d="M100 14c14 0 22 9 22 20 0 6-3 10-7 13h-30c-4-3-7-7-7-13 0-11 8-20 22-20z" fill="none" stroke="#7a5c2c" stroke-width="3"/>
+<rect x="60" y="47" width="80" height="12" rx="3" fill="#2e2413" stroke="#7a5c2c" stroke-width="2"/>
+<path d="M66 59h68l10 20H56z" fill="#241b0e" stroke="#7a5c2c" stroke-width="2"/>
+<rect x="56" y="79" width="88" height="112" rx="4" fill="#15100a" stroke="#7a5c2c" stroke-width="2"/>
+<rect x="68" y="91" width="64" height="88" rx="2" fill="#1b1409" stroke="#4a3a1c" stroke-width="1.5"/>
 <path d="M100 108c11 14 17 24 17 34a17 17 0 0 1-34 0c0-10 6-20 17-34z" fill="#ffb347"/>
 <path d="M100 122c6 8 9 14 9 19a9 9 0 0 1-18 0c0-5 3-11 9-19z" fill="#fff3d1"/>
-<rect x="52" y="191" width="96" height="14" rx="3" fill="#123024" stroke="#2f5c4a" stroke-width="2"/>
-<rect x="66" y="205" width="68" height="10" rx="2" fill="#0d2419" stroke="#2f5c4a" stroke-width="2"/>
+<rect x="52" y="191" width="96" height="14" rx="3" fill="#2e2413" stroke="#7a5c2c" stroke-width="2"/>
+<rect x="66" y="205" width="68" height="10" rx="2" fill="#241b0e" stroke="#7a5c2c" stroke-width="2"/>
 </svg>`;
 
 function AltImage({
@@ -166,29 +166,29 @@ export function Block({ block }: { block: PuzzleBlock }) {
     case "cipher":
       return (
         <figure className="panel notch brackets overflow-hidden">
-          <figcaption className="flex items-center gap-3 border-b border-phos/12 bg-panel-2 px-4 py-2 text-[10px] tracked text-ink-dim">
+          <figcaption className="flex items-center gap-3 border-b border-ember/12 bg-panel-2 px-4 py-2 text-[10px] tracked text-ink-dim">
             <span className="truncate">{block.caption ?? "ciphertext"}</span>
             <span className="hidden text-ink-dim/60 sm:inline">
               {block.text.length} B
             </span>
-            <span className="ml-auto flex items-center gap-1.5 text-phos/50">
-              <span className="h-1 w-1 animate-breathe rounded-full bg-phos" />
+            <span className="ml-auto flex items-center gap-1.5 text-ember/50">
+              <span className="h-1 w-1 animate-breathe rounded-full bg-ember" />
               encrypted
             </span>
           </figcaption>
           <ScrambleIn
             as="pre"
             text={block.text}
-            className="overflow-x-auto px-4 py-5 text-[13px] leading-[1.9] whitespace-pre-wrap break-words text-phos glow-soft sm:px-6 sm:text-[15px]"
+            className="overflow-x-auto px-4 py-5 text-[13px] leading-[1.9] whitespace-pre-wrap break-words text-ember glow-soft sm:px-6 sm:text-[15px]"
           />
         </figure>
       );
 
     case "callout":
       return (
-        <aside className="panel-flush notch border-l-2 border-l-amber px-4 py-3.5 sm:px-5">
-          <p className="text-[10px] tracked text-amber/70">Field note</p>
-          <p className="mt-1.5 text-[14px] text-amber glow-amber italic">{block.text}</p>
+        <aside className="panel-flush notch border-l-2 border-l-scale px-4 py-3.5 sm:px-5">
+          <p className="text-[10px] tracked text-scale/70">Field note</p>
+          <p className="mt-1.5 text-[14px] text-scale glow-scale italic">{block.text}</p>
         </aside>
       );
 

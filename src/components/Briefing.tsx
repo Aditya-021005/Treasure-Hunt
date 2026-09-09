@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import AccountPanel from "@/components/AccountPanel";
 import Countdown from "@/components/Countdown";
+import DragonEye from "@/components/DragonEye";
 import { BoardPreview, Faq, Steps } from "@/components/HomeSections";
 import Typewriter from "@/components/Typewriter";
 import {
@@ -15,14 +16,14 @@ import {
 import type { Me } from "@/lib/types";
 
 const BOOT = [
-  "BEP RELAY v5.1 — cold start, node PILANI-01",
-  "mounting /clock-tower ........... ok",
-  "shiv ganga uplink ............... ok",
+  "DESCENT LOG — Pilani undercroft, level V",
+  "torch ........................... lit",
+  "stair, first turning ............ clear",
   "cipher table .................... SEALED",
   "plate archive ................... SEALED",
-  "vault seal ...................... INTACT",
+  "vault door ...................... HOLDING",
   "",
-  "Registration is open. The locks are not.",
+  "Something below is awake. The party may assemble.",
 ];
 
 const RULES: [string, string][] = [
@@ -76,11 +77,11 @@ function Facts({ me }: { me: Me | null }) {
   ];
 
   return (
-    <dl className="mt-7 grid max-w-2xl grid-cols-2 gap-px overflow-hidden border border-phos/12 bg-phos/12 sm:grid-cols-4">
+    <dl className="mt-7 grid max-w-2xl grid-cols-2 gap-px overflow-hidden border border-ember/12 bg-ember/12 sm:grid-cols-4">
       {facts.map(([k, v]) => (
         <div key={k} className="bg-panel px-3 py-3">
           <dt className="text-[9px] tracked text-ink-dim">{k}</dt>
-          <dd className="mt-1 text-[13px] leading-snug text-phos">{v}</dd>
+          <dd className="mt-1 text-[13px] leading-snug text-ember">{v}</dd>
         </div>
       ))}
     </dl>
@@ -94,8 +95,8 @@ function SealedRail({ count }: { count: number }) {
     <div className="mt-8 max-w-2xl">
       <div className="flex items-center gap-3">
         <p className="text-[9px] tracked text-ink-dim">The locks</p>
-        <span aria-hidden className="h-px flex-1 bg-phos/12" />
-        <p className="text-[9px] tracked text-phos/40">all sealed</p>
+        <span aria-hidden className="h-px flex-1 bg-ember/12" />
+        <p className="text-[9px] tracked text-ember/40">all sealed</p>
       </div>
       {/* Before /api/me lands we do not know how many locks there are, and
           guessing would print a number that might be wrong. An
@@ -103,14 +104,14 @@ function SealedRail({ count }: { count: number }) {
       {count <= 0 ? (
         <div
           aria-hidden
-          className="mt-3 h-[3.25rem] animate-breathe border-t-2 border-t-phos/15 bg-phos/[0.03]"
+          className="mt-3 h-[3.25rem] animate-breathe border-t-2 border-t-ember/15 bg-ember/[0.03]"
         />
       ) : (
       <ol className="mt-3 flex items-stretch gap-1.5">
         {Array.from({ length: count }, (_, i) => (
           <li
             key={i}
-            className="flex flex-1 flex-col gap-1 border-t-2 border-t-phos/15 px-1.5 py-2 text-ink-dim"
+            className="flex flex-1 flex-col gap-1 border-t-2 border-t-ember/15 px-1.5 py-2 text-ink-dim"
           >
             <span className="text-[9px] tracked opacity-70">
               {String(i + 1).padStart(2, "0")} ✕
@@ -159,16 +160,22 @@ export default function Briefing() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <section className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-14">
-        <div className="lg:col-start-1 lg:row-start-1">
+        <div className="relative lg:col-start-1 lg:row-start-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p className="text-[10px] tracked text-amber glow-amber">BEP presents</p>
-            <span aria-hidden className="hidden h-px w-8 bg-phos/25 sm:block" />
+            <p className="text-[10px] tracked text-scale glow-scale">BEP presents</p>
+            <span aria-hidden className="hidden h-px w-8 bg-ember/25 sm:block" />
             <p className="text-[10px] tracked text-ink-dim">
               BITS Pilani · Pilani Campus
             </p>
           </div>
 
-          <h1 className="mt-3 text-4xl leading-[1.05] font-bold tracking-tight text-phos glow sm:text-5xl lg:text-6xl xl:text-7xl">
+          {/* It is watching the whole page. Behind the type, never over it. */}
+          <DragonEye
+            variant="hero"
+            className="pointer-events-none absolute -top-10 -left-16 -z-10 hidden w-[30rem] text-ember-deep opacity-30 blur-[1px] lg:block"
+          />
+
+          <h1 className="relative mt-3 text-4xl leading-[1.05] font-bold tracking-tight text-ember glow sm:text-5xl lg:text-6xl xl:text-7xl">
             <span className="glitch" data-text="CIPHER">
               CIPHER
             </span>
@@ -187,7 +194,7 @@ export default function Briefing() {
           <Facts me={me} />
 
           {me?.preview && (
-            <p className="mt-6 flex max-w-2xl items-start gap-2 border border-amber/50 bg-amber/10 px-4 py-3 text-[12px] leading-relaxed text-amber">
+            <p className="mt-6 flex max-w-2xl items-start gap-2 border border-scale/50 bg-scale/10 px-4 py-3 text-[12px] leading-relaxed text-scale">
               <span aria-hidden className="mt-0.5">▲</span>
               <span>
                 <strong className="tracked">Organiser preview.</strong> The
@@ -213,7 +220,7 @@ export default function Briefing() {
           {locked && !me?.preview && (
             <p
               role="status"
-              className="mt-6 max-w-2xl border border-amber/40 bg-amber/5 px-4 py-3 text-[12px] leading-relaxed text-amber"
+              className="mt-6 max-w-2xl border border-scale/40 bg-scale/5 px-4 py-3 text-[12px] leading-relaxed text-scale"
             >
               {locked === "before"
                 ? "The terminal is sealed until the hunt opens. Register now and it will unlock itself."
@@ -233,8 +240,8 @@ export default function Briefing() {
           )}
 
           {(phase === "open" || me?.preview) && (
-            <p className="mt-8 inline-flex items-center gap-2 border border-phos/30 bg-phos/5 px-4 py-2 text-[11px] tracked text-phos">
-              <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-phos" />
+            <p className="mt-8 inline-flex items-center gap-2 border border-ember/30 bg-ember/5 px-4 py-2 text-[11px] tracked text-ember">
+              <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-ember" />
               {me?.preview && phase !== "open" ? "Unlocked for you" : "The hunt is live"}
             </p>
           )}
@@ -257,7 +264,7 @@ export default function Briefing() {
           ) : (
             <div className="panel notch brackets w-full p-5 sm:p-7" id="join">
               <p className="caret text-[11px] tracked text-ink-dim">
-                Establishing link
+                Striking a torch
               </p>
               {/* Holds the panel's height so the page does not jump when
                   the session arrives. */}
@@ -265,7 +272,7 @@ export default function Briefing() {
                 {[100, 72, 88, 60].map((w, i) => (
                   <div
                     key={i}
-                    className="h-9 animate-breathe border border-phos/10 bg-phos/[0.03]"
+                    className="h-9 animate-breathe border border-ember/10 bg-ember/[0.03]"
                     style={{ width: `${w}%`, animationDelay: `${i * 0.18}s` }}
                   />
                 ))}
@@ -278,13 +285,13 @@ export default function Briefing() {
             and the buttons; on a phone that put the whole boot animation
             between a visitor and the registration panel. */}
         <div className="panel notch brackets max-w-2xl p-4 sm:p-5 lg:col-start-1 lg:row-start-2">
-          <div className="mb-3 flex items-center gap-2 border-b border-phos/10 pb-2 text-[9px] tracked text-ink-dim">
-            <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-phos" />
+          <div className="mb-3 flex items-center gap-2 border-b border-ember/10 pb-2 text-[9px] tracked text-ink-dim">
+            <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-ember" />
             tty/relay-0 · handshake
           </div>
           <Typewriter
             lines={BOOT}
-            className="min-h-[10.5rem] text-[12px] leading-relaxed break-words text-phos/85 sm:text-[13px]"
+            className="min-h-[10.5rem] text-[12px] leading-relaxed break-words text-ember/85 sm:text-[13px]"
           />
         </div>
       </section>
@@ -294,13 +301,13 @@ export default function Briefing() {
       <section id="rules" className="mt-20 scroll-mt-32 sm:mt-24">
         <div className="flex items-center gap-3">
           <h2 className="text-[10px] tracked text-ink-dim">How it works</h2>
-          <span aria-hidden className="h-px flex-1 bg-phos/12" />
-          <span className="text-[9px] tracked text-phos/40">
+          <span aria-hidden className="h-px flex-1 bg-ember/12" />
+          <span className="text-[9px] tracked text-ember/40">
             {RULES.length.toString().padStart(2, "0")} protocols
           </span>
         </div>
 
-        <div className="mt-5 grid gap-px overflow-hidden border border-phos/12 bg-phos/12 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid gap-px overflow-hidden border border-ember/12 bg-ember/12 sm:grid-cols-2 lg:grid-cols-3">
           {RULES.map(([title, body], i) => (
             <article
               key={title}
@@ -310,10 +317,10 @@ export default function Briefing() {
                   : ""
               }`}
             >
-              <p className="text-[10px] tracked text-phos/60">
+              <p className="text-[10px] tracked text-ember/60">
                 {String(i + 1).padStart(2, "0")}
               </p>
-              <h3 className="mt-2 text-[14px] text-phos">{title}</h3>
+              <h3 className="mt-2 text-[14px] text-ember">{title}</h3>
               <p className="mt-2 max-w-prose text-[13px] leading-relaxed text-ink-dim">
                 {body}
               </p>

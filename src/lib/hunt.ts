@@ -296,7 +296,7 @@ export async function submitAnswer(
     if (t.lockedUntil > now)
       return {
         ok: false as const,
-        error: "Terminal cooling down.",
+        error: "The mechanism is seized. Give it a moment.",
         status: 429,
         lockedUntil: t.lockedUntil,
       };
@@ -378,7 +378,7 @@ export async function checkGate(
     if (!level?.gate)
       return { ok: false as const, error: "This level has no lock.", status: 400 };
     if (t.lockedUntil > now)
-      return { ok: false as const, error: "Terminal cooling down.", status: 429 };
+      return { ok: false as const, error: "The mechanism is seized. Give it a moment.", status: 429 };
     if (now - t.lastAttemptAt < MIN_GAP_MS)
       return { ok: false as const, error: "Slow down.", status: 429 };
 

@@ -52,9 +52,9 @@ export default function AnswerShape({ shape, value }: Props) {
                       ? over
                         ? "border-danger/60 bg-danger/10 text-danger"
                         : exact
-                          ? "border-phos bg-phos/15 text-phos glow"
-                          : "border-phos/45 bg-phos/5 text-phos"
-                      : "border-phos/20 text-transparent"
+                          ? "border-ember bg-ember/15 text-ember glow"
+                          : "border-ember/45 bg-ember/5 text-ember"
+                      : "border-ember/20 text-transparent"
                   }`}
                 >
                   {ch ?? "·"}
@@ -67,7 +67,7 @@ export default function AnswerShape({ shape, value }: Props) {
 
       <p
         className={`text-[10px] tracked ${
-          over ? "text-danger" : exact ? "text-phos" : "text-ink-dim"
+          over ? "text-danger" : exact ? "text-ember" : "text-ink-dim"
         }`}
       >
         {over

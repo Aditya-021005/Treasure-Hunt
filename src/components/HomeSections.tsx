@@ -19,7 +19,7 @@ export function Steps({ me }: { me: Me | null }) {
   const steps: [string, string][] = [
     ["Sign in", "One account per person. Nothing to install."],
     ["Form a team", `Your captain creates it and shares a join code — up to ${size} of you.`],
-    ["Wait for the seal to break", "The terminal unlocks itself the moment the hunt opens. Stay on the page."],
+    ["Wait for the seal to break", "The dig unlocks itself the moment the hunt opens. Stay on the page."],
     [`Open ${locks} locks`, "Each answer is the key to the next one. There is no skipping ahead."],
     ["Carry the last word", "The final answer is not typed anywhere. You take it with you."],
   ];
@@ -28,8 +28,8 @@ export function Steps({ me }: { me: Me | null }) {
     <section className="mt-20 sm:mt-24">
       <div className="flex items-center gap-3">
         <h2 className="text-[10px] tracked text-ink-dim">The run</h2>
-        <span aria-hidden className="h-px flex-1 bg-phos/12" />
-        <span className="text-[9px] tracked text-phos/40">
+        <span aria-hidden className="h-px flex-1 bg-ember/12" />
+        <span className="text-[9px] tracked text-ember/40">
           {pad2(steps.length)} steps
         </span>
       </div>
@@ -38,18 +38,18 @@ export function Steps({ me }: { me: Me | null }) {
         {steps.map(([title, body], i) => (
           <li key={title} className="relative flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="grid h-7 w-7 shrink-0 place-items-center border border-phos/35 text-[11px] text-phos">
+              <span className="grid h-7 w-7 shrink-0 place-items-center border border-ember/35 text-[11px] text-ember">
                 {i + 1}
               </span>
               {/* Connector, drawn only between cards on one row. */}
               {i < steps.length - 1 && (
                 <span
                   aria-hidden
-                  className="hidden h-px flex-1 bg-gradient-to-r from-phos/30 to-transparent lg:block"
+                  className="hidden h-px flex-1 bg-gradient-to-r from-ember/30 to-transparent lg:block"
                 />
               )}
             </div>
-            <h3 className="text-[13px] leading-snug text-phos">{title}</h3>
+            <h3 className="text-[13px] leading-snug text-ember">{title}</h3>
             <p className="text-[12px] leading-relaxed text-ink-dim">{body}</p>
           </li>
         ))}
@@ -95,40 +95,40 @@ export function BoardPreview({ me }: { me: Me | null }) {
     <section className="mt-20 sm:mt-24">
       <div className="flex items-center gap-3">
         <h2 className="text-[10px] tracked text-ink-dim">Standings</h2>
-        <span aria-hidden className="h-px flex-1 bg-phos/12" />
+        <span aria-hidden className="h-px flex-1 bg-ember/12" />
         <Link
           href="/leaderboard"
-          className="text-[9px] tracked text-phos/60 underline-offset-4 hover:text-phos hover:underline"
+          className="text-[9px] tracked text-ember/60 underline-offset-4 hover:text-ember hover:underline"
         >
           full board →
         </Link>
       </div>
 
       {top.length > 0 ? (
-        <ol className="mt-5 grid gap-px overflow-hidden border border-phos/12 bg-phos/12 sm:grid-cols-3">
+        <ol className="mt-5 grid gap-px overflow-hidden border border-ember/12 bg-ember/12 sm:grid-cols-3">
           {top.map((r) => (
             <li key={r.rank} className="flex flex-col gap-1 bg-panel px-5 py-4">
               <div className="flex items-baseline gap-2">
-                <span className="text-[10px] tracked text-phos/60">
+                <span className="text-[10px] tracked text-ember/60">
                   {pad2(r.rank)}
                 </span>
                 <span className="truncate text-[14px] text-ink">{r.name}</span>
               </div>
               <div className="flex items-baseline gap-3 text-[11px] tracked text-ink-dim">
-                <span className="tabular-nums text-phos">
+                <span className="tabular-nums text-ember">
                   {pad2(r.solved)}/{pad2(r.totalLevels)}
                 </span>
                 <span className="tabular-nums">{formatDuration(r.timeMs)}</span>
-                {r.finished && <span className="ml-auto text-amber">cleared</span>}
+                {r.finished && <span className="ml-auto text-scale">cleared</span>}
               </div>
             </li>
           ))}
         </ol>
       ) : (
-        <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-4 border border-phos/12 bg-panel px-5 py-6">
+        <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-4 border border-ember/12 bg-panel px-5 py-6">
           <div>
             <p className="text-[9px] tracked text-ink-dim">Teams registered</p>
-            <p className="mt-1 text-3xl tabular-nums text-phos glow">
+            <p className="mt-1 text-3xl tabular-nums text-ember glow">
               {registered}
             </p>
           </div>
@@ -173,18 +173,18 @@ export function Faq() {
     <section className="mt-20 sm:mt-24">
       <div className="flex items-center gap-3">
         <h2 className="text-[10px] tracked text-ink-dim">Questions</h2>
-        <span aria-hidden className="h-px flex-1 bg-phos/12" />
-        <span className="text-[9px] tracked text-phos/40">{pad2(FAQ.length)}</span>
+        <span aria-hidden className="h-px flex-1 bg-ember/12" />
+        <span className="text-[9px] tracked text-ember/40">{pad2(FAQ.length)}</span>
       </div>
 
-      <div className="mt-5 flex flex-col gap-px overflow-hidden border border-phos/12 bg-phos/12">
+      <div className="mt-5 flex flex-col gap-px overflow-hidden border border-ember/12 bg-ember/12">
         {FAQ.map(([q, a]) => (
           <details key={q} className="group bg-panel">
-            <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-[13px] text-ink transition-colors hover:text-phos">
+            <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-[13px] text-ink transition-colors hover:text-ember">
               <span className="flex-1">{q}</span>
               <span
                 aria-hidden
-                className="text-[13px] text-phos/50 transition-transform group-open:rotate-45"
+                className="text-[13px] text-ember/50 transition-transform group-open:rotate-45"
               >
                 +
               </span>

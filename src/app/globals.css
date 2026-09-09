@@ -1,29 +1,41 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- *  BEP CIPHER HUNT — retro terminal design system
+ *  BEP CIPHER HUNT — dungeon design system
+ *
+ *  Obsidian and cold stone, lit from below by something molten. Ember
+ *  for anything alive, dragon-scale green for anything watching, bone
+ *  for text. Nothing here is meant to look safe.
  * ------------------------------------------------------------------ */
 
 @theme {
-  --color-void: #04070a;
-  --color-panel: #070d12;
-  --color-panel-2: #0a1219;
-  --color-grid: #0f2a20;
+  --color-void: #0a0607;
+  --color-panel: #150d0e;
+  --color-panel-2: #1f1415;
+  --color-grid: #3d1d13;
 
-  --color-phos: #35ff9b;
-  --color-phos-dim: #1f9e63;
-  --color-phos-deep: #0d3d29;
-  --color-amber: #ffb347;
-  --color-danger: #ff5f56;
-  --color-ink: #b9f5d6;
-  --color-ink-dim: #5f8f79;
+  /* primary — molten */
+  --color-ember: #ff7a2f;
+  --color-ember-dim: #b8481a;
+  --color-ember-deep: #4a1608;
 
-  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  /* accent — dragon scale, cold against all that heat */
+  --color-scale: #3fbf8a;
+
+  /* blood, kept pink enough to read apart from the lava */
+  --color-danger: #e0344a;
+
+  /* bone and ash */
+  --color-ink: #ece0d4;
+  --color-ink-dim: #9b8578;
+
+  --font-display: var(--font-gotisch), "Cinzel Decorative", Georgia, serif;
+  --font-body: var(--font-garamond), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-courier), ui-monospace, "Courier New", monospace;
 
   --animate-blink: blink 1.05s step-end infinite;
-  --animate-flicker: flicker 7s linear infinite;
-  --animate-scan: scan 7s linear infinite;
+  --animate-flicker: flicker 5s linear infinite;
+  --animate-scan: scan 14s ease-in-out infinite;
   --animate-rise: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-breathe: breathe 4.5s ease-in-out infinite;
 }
@@ -32,15 +44,24 @@
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
+/* A lamp gutters irregularly and warms as it recovers — nothing like the
+   even blink of a raster scan. */
 @keyframes flicker {
-  0%, 96%, 100% { opacity: 1; }
-  97% { opacity: 0.82; }
-  98% { opacity: 1; }
-  99% { opacity: 0.9; }
+  0%, 100% { opacity: 1; }
+  6% { opacity: 0.88; }
+  8% { opacity: 1; }
+  40% { opacity: 0.82; }
+  42% { opacity: 0.95; }
+  43% { opacity: 0.78; }
+  46% { opacity: 1; }
+  74% { opacity: 0.9; }
+  76% { opacity: 1; }
+  88% { opacity: 0.85; }
+  90% { opacity: 1; }
 }
 @keyframes scan {
-  0% { transform: translateY(-12vh); }
-  100% { transform: translateY(112vh); }
+  0%, 100% { transform: translate(-2%, 0) scaleY(1); opacity: 0.85; }
+  50% { transform: translate(2%, -1.5vh) scaleY(1.14); opacity: 1; }
 }
 @keyframes rise {
   from { opacity: 0; transform: translateY(10px); }
@@ -69,122 +90,140 @@ html {
 body {
   background-color: var(--color-void);
   color: var(--color-ink);
-  font-family: var(--font-mono);
-  font-size: 15px;
-  line-height: 1.65;
+  font-family: var(--font-body);
+  font-size: 16.5px;
+  line-height: 1.7;
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: var(--color-phos);
+  background: var(--color-ember);
   color: var(--color-void);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-phos);
+  outline: 2px solid var(--color-ember);
   outline-offset: 2px;
 }
 
-/* -------------------------------- CRT chrome ----------------------- */
+/* ------------------------------- the dark -------------------------- */
 
-/* How far gone the terminal is: 0 on the first lock, 1 on the last. The
-   hunt shell writes this onto <html> as the team advances. Everything that
-   reads it must look exactly as before at 0. */
+/* How deep you have gone: 0 at the entrance, 1 at the bottom. The hunt
+   shell writes this onto <html> as the team descends, and the heat comes
+   up to meet them. */
 :root {
-  --crt: 0;
+  --depth: 0;
 }
 
-.crt-layer {
+.veil {
   position: fixed;
   inset: 0;
   z-index: 50;
   pointer-events: none;
 }
 
-/* horizontal scanlines */
-.crt-lines {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0px,
-    rgba(0, 0, 0, 0) 2px,
-    rgba(0, 0, 0, 0.28) 3px,
-    rgba(0, 0, 0, 0.28) 4px
-  );
-  opacity: calc(0.55 + var(--crt) * 0.22);
-  mix-blend-mode: multiply;
+/* Scales. Two offset rows of arcs interlock into a hide stretched over
+   the whole screen — faint, but it is never flat stone behind you. */
+.veil-grain {
+  background-image:
+    radial-gradient(circle at 50% 118%, transparent 11px, rgba(0, 0, 0, 0.55) 12px, transparent 13px),
+    radial-gradient(circle at 50% 118%, transparent 11px, rgba(255, 122, 47, 0.05) 12px, transparent 13px);
+  background-size: 26px 17px, 26px 17px;
+  background-position: 0 0, 13px 8.5px;
+  opacity: calc(0.5 + var(--depth) * 0.25);
 }
 
-/* slow travelling brightness band */
-.crt-sweep::after {
+/* Something molten below the floor. It breathes, and it climbs the
+   deeper you are — at the last lock the glow reaches halfway up. */
+.veil-torch::after {
   content: "";
   position: absolute;
-  inset-inline: 0;
-  height: 22vh;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(53, 255, 155, 0.045),
-    transparent
-  );
-  animation: var(--animate-scan);
-  animation-duration: calc(7s - var(--crt) * 3s);
-}
-
-/* The whole-page flicker comes round more often the deeper you are:
-   every 7s at the start, every ~2.4s on the last lock. */
-.animate-flicker {
-  animation-duration: calc(7s - var(--crt) * 4.6s);
-}
-
-/* corner vignette + phosphor bloom */
-.crt-vignette {
+  inset-inline: -10%;
+  bottom: -18vh;
+  height: calc(34vh + var(--depth) * 26vh);
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(53, 255, 155, 0.07), transparent 55%),
-    radial-gradient(140% 120% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.85) 100%);
+    radial-gradient(60% 100% at 50% 100%, rgba(255, 96, 20, 0.22), transparent 72%),
+    radial-gradient(90% 100% at 20% 100%, rgba(255, 160, 40, 0.1), transparent 70%),
+    radial-gradient(90% 100% at 82% 100%, rgba(226, 52, 30, 0.12), transparent 70%);
+  animation: var(--animate-scan);
+  animation-duration: calc(14s - var(--depth) * 7s);
+}
+
+/* Deeper in, the light gutters harder. */
+.animate-flicker {
+  animation-duration: calc(5s - var(--depth) * 3.2s);
+}
+
+/* Black closing in on every side, with the fire showing at the bottom. */
+.veil-vignette {
+  background:
+    radial-gradient(120% 70% at 50% 108%, rgba(255, 110, 30, 0.16), transparent 60%),
+    radial-gradient(125% 105% at 50% 42%, transparent 30%, rgba(0, 0, 0, 0.93) 100%);
 }
 
 /* faint grid */
 .grid-bg {
   background-image:
-    linear-gradient(to right, rgba(53, 255, 155, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(53, 255, 155, 0.045) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 122, 47, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 122, 47, 0.05) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(90% 70% at 50% 30%, #000 20%, transparent 100%);
 }
 
 /* ------------------------------ typography ------------------------- */
 
-.glow { text-shadow: 0 0 12px rgba(53, 255, 155, 0.55); }
-.glow-soft { text-shadow: 0 0 18px rgba(53, 255, 155, 0.25); }
-.glow-amber { text-shadow: 0 0 14px rgba(255, 179, 71, 0.45); }
+.glow {
+  text-shadow:
+    0 0 6px rgba(255, 160, 60, 0.7),
+    0 0 22px rgba(255, 96, 20, 0.55),
+    0 0 48px rgba(255, 60, 0, 0.3);
+}
+.glow-soft { text-shadow: 0 0 20px rgba(255, 122, 47, 0.35); }
+.glow-scale {
+  text-shadow:
+    0 0 8px rgba(63, 191, 138, 0.55),
+    0 0 26px rgba(63, 191, 138, 0.25);
+}
 
-.tracked { letter-spacing: 0.24em; text-transform: uppercase; }
+.tracked {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+h1, h2, h3 { font-family: var(--font-display); }
+
+pre, code, .tabular-nums, [class*="tabular-nums"] {
+  font-family: var(--font-mono);
+}
 
 .caret::after {
   content: "\2588";
   margin-left: 0.15em;
   animation: var(--animate-blink);
-  color: var(--color-phos);
+  color: var(--color-ember);
 }
 
 /* ------------------------------- surfaces -------------------------- */
 
 .panel {
   background:
-    linear-gradient(to bottom, rgba(53, 255, 155, 0.035), transparent 40%),
+    linear-gradient(to bottom, rgba(255, 122, 47, 0.05), transparent 38%),
     var(--color-panel);
-  border: 1px solid rgba(53, 255, 155, 0.16);
+  border: 1px solid rgba(255, 122, 47, 0.18);
   box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(0, 0, 0, 0.4),
-    0 24px 60px -30px rgba(53, 255, 155, 0.35);
+    inset 0 1px 0 rgba(255, 150, 70, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 26px 70px -34px rgba(255, 90, 20, 0.5);
 }
 
 .panel-flush {
   background: var(--color-panel-2);
-  border: 1px solid rgba(53, 255, 155, 0.12);
+  border: 1px solid rgba(255, 122, 47, 0.12);
 }
 
 /* clipped "cut corner" terminal frame */
@@ -206,7 +245,7 @@ body {
 
 .btn {
   --btn-fg: var(--color-void);
-  --btn-bg: var(--color-phos);
+  --btn-bg: var(--color-ember);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -230,30 +269,30 @@ body {
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-ghost {
-  --btn-fg: var(--color-phos);
+  --btn-fg: var(--color-ember);
   --btn-bg: transparent;
-  border-color: rgba(53, 255, 155, 0.35);
+  border-color: rgba(255, 122, 47, 0.35);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(53, 255, 155, 0.08);
+  background: rgba(255, 122, 47, 0.08);
   box-shadow: none;
 }
 
 .field {
   width: 100%;
   padding: 0.85rem 1rem;
-  background: #030507;
-  border: 1px solid rgba(53, 255, 155, 0.22);
-  color: var(--color-phos);
+  background: #080405;
+  border: 1px solid rgba(255, 122, 47, 0.22);
+  color: var(--color-ember);
   font-family: var(--font-mono);
   letter-spacing: 0.1em;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.field::placeholder { color: rgba(95, 143, 121, 0.6); letter-spacing: 0.08em; }
+.field::placeholder { color: rgba(155, 133, 120, 0.6); letter-spacing: 0.08em; }
 .field:focus {
   outline: none;
-  border-color: var(--color-phos);
-  box-shadow: 0 0 0 1px var(--color-phos), 0 0 26px -8px var(--color-phos);
+  border-color: var(--color-ember);
+  box-shadow: 0 0 0 1px var(--color-ember), 0 0 26px -8px var(--color-ember);
 }
 
 .shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
@@ -295,10 +334,10 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  .crt-sweep::after { display: none; }
+  .veil-torch::after { display: none; }
   .fade-word { opacity: 1; filter: none; transform: none; }
   /* !important beats the inline value the hunt shell sets on <html>. */
-  :root { --crt: 0 !important; }
+  :root { --depth: 0 !important; }
 }
 
 /* ================================================================== *
@@ -308,18 +347,6 @@ body {
 @keyframes sweepDown {
   from { transform: translateY(0); opacity: 0.9; }
   to { transform: translateY(100%); opacity: 0; }
-}
-@keyframes glitchTop {
-  0%, 92%, 100% { transform: none; opacity: 0; }
-  93% { transform: translate(-2px, -1px); opacity: 0.9; }
-  95% { transform: translate(2px, 1px); opacity: 0.9; }
-  97% { transform: translate(-1px, 1px); opacity: 0.7; }
-}
-@keyframes glitchBot {
-  0%, 90%, 100% { transform: none; opacity: 0; }
-  91% { transform: translate(2px, 1px); opacity: 0.9; }
-  94% { transform: translate(-3px, -1px); opacity: 0.8; }
-  96% { transform: translate(1px, -1px); opacity: 0.6; }
 }
 @keyframes ticker {
   from { transform: translateY(0); }
@@ -342,7 +369,7 @@ body {
   width: 13px;
   height: 13px;
   pointer-events: none;
-  border-color: var(--color-phos);
+  border-color: var(--color-ember);
   opacity: 0.55;
 }
 .brackets::before {
@@ -374,47 +401,61 @@ body {
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(53, 255, 155, 0.1) 60%,
-    rgba(53, 255, 155, 0.5)
+    rgba(255, 122, 47, 0.1) 60%,
+    rgba(255, 122, 47, 0.5)
   );
-  border-bottom: 1px solid rgba(53, 255, 155, 0.7);
+  border-bottom: 1px solid rgba(255, 122, 47, 0.7);
   animation: sweepDown 1.1s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
 }
 
-/* --- RGB-split glitch on display type ---------------------------- */
+/* --- chiselled display type --------------------------------------- */
 
+/* Lettering cut into stone: the lamp catches the top edge, the cut throws
+   a shadow below it, and the whole thing sits slightly proud of the wall.
+   Kept on the same `.glitch` hook so the markup did not have to change. */
 .glitch {
   position: relative;
   display: inline-block;
+  text-shadow:
+    0 1px 0 rgba(255, 226, 168, 0.28),
+    0 -1px 0 rgba(0, 0, 0, 0.65),
+    0 2px 3px rgba(0, 0, 0, 0.75),
+    0 0 28px rgba(255, 122, 47, 0.28);
 }
-.glitch::before,
-.glitch::after {
+
+/* A slow warm sheen travelling across the inscription, as if the lamp
+   were being carried past it. */
+.glitch::before {
   content: attr(data-text);
   position: absolute;
   inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 233, 186, 0.55) 50%,
+    transparent 65%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sheen 9s ease-in-out infinite;
   pointer-events: none;
-  clip-path: inset(0 0 55% 0);
 }
-.glitch::before {
-  color: #37e6ff;
-  text-shadow: -2px 0 rgba(55, 230, 255, 0.85);
-  animation: glitchTop 5.5s infinite steps(1);
-}
-.glitch::after {
-  color: var(--color-amber);
-  clip-path: inset(58% 0 0 0);
-  text-shadow: 2px 0 rgba(255, 179, 71, 0.75);
-  animation: glitchBot 7.3s infinite steps(1);
+
+@keyframes sheen {
+  0%, 60% { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
 }
 
 /* --- instrumentation strip --------------------------------------- */
 
 .hud-strip {
-  border-bottom: 1px solid rgba(53, 255, 155, 0.1);
+  border-bottom: 1px solid rgba(255, 122, 47, 0.1);
   background:
     repeating-linear-gradient(
       90deg,
-      rgba(53, 255, 155, 0.05) 0 1px,
+      rgba(255, 122, 47, 0.05) 0 1px,
       transparent 1px 5px
     ),
     #050a0e;
@@ -423,7 +464,7 @@ body {
 .sig-bar {
   display: inline-block;
   width: 3px;
-  background: var(--color-phos);
+  background: var(--color-ember);
   animation: barPulse 2.6s ease-in-out infinite;
 }
 
@@ -528,7 +569,7 @@ body {
   display: block;
   height: 100%;
   transform-origin: 0 50%;
-  background: linear-gradient(90deg, transparent, var(--color-phos), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-ember), transparent);
   animation: railWipe 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -569,7 +610,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(53, 255, 155, 0.22),
+    rgba(255, 122, 47, 0.22),
     transparent
   );
 }
@@ -587,7 +628,7 @@ body {
   position: absolute;
   inset-block: 0;
   width: 25%;
-  background: var(--color-phos);
+  background: var(--color-ember);
   animation: barSlide 0.9s ease-in-out infinite;
 }
 
@@ -669,9 +710,9 @@ body {
 .cube-face {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(53, 255, 155, 0.5);
-  background: rgba(53, 255, 155, 0.04);
-  box-shadow: inset 0 0 34px rgba(53, 255, 155, 0.16);
+  border: 1px solid rgba(255, 122, 47, 0.5);
+  background: rgba(255, 122, 47, 0.04);
+  box-shadow: inset 0 0 34px rgba(255, 122, 47, 0.16);
 }
 .cube-face:nth-child(1) { transform: translateZ(66px); }
 .cube-face:nth-child(2) { transform: rotateY(180deg) translateZ(66px); }
@@ -687,9 +728,9 @@ body {
   animation: cubeSpinBack 3.6s linear infinite;
 }
 .cube-inner .cube-face {
-  border-color: rgba(255, 179, 71, 0.55);
-  background: rgba(255, 179, 71, 0.05);
-  box-shadow: inset 0 0 18px rgba(255, 179, 71, 0.2);
+  border-color: rgba(63, 191, 138, 0.55);
+  background: rgba(63, 191, 138, 0.05);
+  box-shadow: inset 0 0 18px rgba(63, 191, 138, 0.2);
 }
 .cube-inner .cube-face:nth-child(1) { transform: translateZ(32px); }
 .cube-inner .cube-face:nth-child(2) { transform: rotateY(180deg) translateZ(32px); }
@@ -705,7 +746,7 @@ body {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--color-phos);
+  background: var(--color-ember);
   filter: blur(6px);
   animation: coreThrob 1.7s ease-in-out infinite;
 }
@@ -713,7 +754,7 @@ body {
 .orbit-ring {
   position: absolute;
   inset: -34px;
-  border: 1px dashed rgba(53, 255, 155, 0.22);
+  border: 1px dashed rgba(255, 122, 47, 0.22);
   border-radius: 50%;
   animation: ringSpin 9s linear infinite;
 }
@@ -732,7 +773,7 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: #050a0d; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(53, 255, 155, 0.22);
+  background: rgba(255, 122, 47, 0.22);
   border: 2px solid #050a0d;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(53, 255, 155, 0.4); }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 122, 47, 0.4); }

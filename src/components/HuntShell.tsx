@@ -74,7 +74,7 @@ export default function HuntShell() {
         setState(data.state);
         setLevel(data.level);
       } catch {
-        if (alive) setFeedback({ kind: "error", text: "Could not reach the server." });
+        if (alive) setFeedback({ kind: "error", text: "Nothing answers from below." });
       } finally {
         if (alive) setLoading(false);
       }
@@ -135,16 +135,16 @@ export default function HuntShell() {
 
   /* --------------------------- CRT decay -------------------------- */
 
-  /* The terminal degrades as the team gets deeper: scanlines thicken and
+  /* The dig degrades as the team gets deeper: scanlines thicken and
      the flicker comes round more often. Level 1 looks exactly as it always
      did; the stylesheet clamps this back to 0 under reduced motion. */
   useEffect(() => {
     const root = document.documentElement;
     const span = Math.max(1, (state?.totalLevels ?? 1) - 1);
     const depth = Math.min(1, Math.max(0, ((state?.level ?? 1) - 1) / span));
-    root.style.setProperty("--crt", String(depth.toFixed(3)));
+    root.style.setProperty("--depth", String(depth.toFixed(3)));
     return () => {
-      root.style.removeProperty("--crt");
+      root.style.removeProperty("--depth");
     };
   }, [state?.level, state?.totalLevels]);
 
@@ -232,7 +232,7 @@ export default function HuntShell() {
           setLevel((l) => (l ? { ...l, attempts: l.attempts + 1 } : l));
         }
       } catch {
-        setFeedback({ kind: "error", text: "Connection lost. Try again." });
+        setFeedback({ kind: "error", text: "The dark swallowed that. Try again." });
       } finally {
         setBusy(false);
         pausePollRef.current = false;
@@ -299,7 +299,7 @@ export default function HuntShell() {
   }, [router]);
 
   /** Back to the briefing, session intact. */
-  const leaveTerminal = useCallback(() => {
+  const leaveDig = useCallback(() => {
     setLeaving(true);
     router.push("/");
   }, [router]);
@@ -318,7 +318,7 @@ export default function HuntShell() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-6xl items-center justify-center px-4">
         <p className="caret text-[11px] tracked text-ink-dim">
-          Establishing link
+          Striking a torch
         </p>
       </div>
     );
@@ -345,21 +345,21 @@ export default function HuntShell() {
           type="button"
           onClick={() => setConfirm("exit")}
           title="Back to the briefing page"
-          className="notch flex shrink-0 items-center gap-2 border border-phos/35 px-3 py-2 text-[10px] tracked text-phos transition-all hover:border-phos hover:bg-phos/10 hover:shadow-[0_0_20px_-6px] hover:shadow-phos/70"
+          className="notch flex shrink-0 items-center gap-2 border border-ember/35 px-3 py-2 text-[10px] tracked text-ember transition-all hover:border-ember hover:bg-ember/10 hover:shadow-[0_0_20px_-6px] hover:shadow-ember/70"
         >
           <span aria-hidden className="text-[13px] leading-none">&lsaquo;</span>
           Back
         </button>
 
-        <span aria-hidden className="hidden h-8 w-px bg-phos/15 sm:block" />
+        <span aria-hidden className="hidden h-8 w-px bg-ember/15 sm:block" />
 
         <div className="min-w-0">
           <p className="text-[10px] tracked text-ink-dim">Team</p>
-          <p className="truncate text-[14px] text-phos glow">{state.team.name}</p>
+          <p className="truncate text-[14px] text-ember glow">{state.team.name}</p>
         </div>
 
         <div className="hidden sm:block">
-          <p className="text-[10px] tracked text-ink-dim">Session</p>
+          <p className="text-[10px] tracked text-ink-dim">Seal</p>
           <p className="text-[14px] tabular-nums text-ink/70">
             0x{sessionTag(state.team.name)}
           </p>
@@ -370,7 +370,7 @@ export default function HuntShell() {
           <p className="text-[14px] tabular-nums text-ink">
             {formatDuration(elapsed)}
             {state.penaltyMs > 0 && (
-              <span className="ml-2 text-[11px] text-amber">
+              <span className="ml-2 text-[11px] text-scale">
                 +{Math.round(state.penaltyMs / 60000)}m
               </span>
             )}
@@ -382,7 +382,7 @@ export default function HuntShell() {
             they are being charged for thinking. */}
         <div title="What the leaderboard ranks you on. It stops between solves.">
           <p className="text-[10px] tracked text-ink-dim">Ranked</p>
-          <p className="text-[14px] tabular-nums text-phos">
+          <p className="text-[14px] tabular-nums text-ember">
             {formatDuration(state.rankedMs)}
           </p>
         </div>
@@ -410,16 +410,16 @@ export default function HuntShell() {
             <div
               className={`relative flex min-w-[86px] flex-1 flex-col gap-1 border-t-2 px-2 py-2 transition-colors ${
                 r.status === "solved"
-                  ? "border-t-phos text-phos"
+                  ? "border-t-ember text-ember"
                   : r.status === "active"
-                    ? "border-t-amber text-amber"
-                    : "border-t-phos/15 text-ink-dim"
+                    ? "border-t-scale text-scale"
+                    : "border-t-ember/15 text-ink-dim"
               }`}
             >
               {r.status === "active" && (
                 <span
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-amber/12 to-transparent"
+                  className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-scale/12 to-transparent"
                 />
               )}
               <span className="relative text-[9px] tracked opacity-70">
@@ -433,7 +433,7 @@ export default function HuntShell() {
               <span
                 aria-hidden
                 className={`mt-[-1px] self-start text-[9px] ${
-                  r.status === "solved" ? "text-phos/50" : "text-phos/15"
+                  r.status === "solved" ? "text-ember/50" : "text-ember/15"
                 }`}
               >
                 ›
@@ -450,19 +450,19 @@ export default function HuntShell() {
           {/* ------------------------- puzzle ----------------------- */}
           <section key={level.id} className="decrypting turn-3d">
             <header className="mb-5">
-              <p className="flex flex-wrap items-center gap-x-3 text-[10px] tracked text-amber">
+              <p className="flex flex-wrap items-center gap-x-3 text-[10px] tracked text-scale">
                 <span>
                   Lock {pad2(level.id)} · {level.codename}
                 </span>
-                <span aria-hidden className="h-px w-6 bg-amber/30" />
+                <span aria-hidden className="h-px w-6 bg-scale/30" />
                 <span className="text-ink-dim">
-                  channel {pad2(level.id)}/{pad2(state.totalLevels)} · decrypted
+                  chamber {pad2(level.id)} of {pad2(state.totalLevels)} · opened
                 </span>
               </p>
               <ScrambleIn
                 text={level.title}
                 tick={22}
-                className="mt-1.5 block text-2xl leading-tight text-phos glow sm:text-3xl"
+                className="mt-1.5 block text-2xl leading-tight text-ember glow sm:text-3xl"
               />
               <p className="mt-2 max-w-prose text-[13px] text-ink-dim italic">
                 {level.brief}
@@ -496,7 +496,7 @@ export default function HuntShell() {
                 <div className="relative flex-1">
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-phos/50"
+                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ember/50"
                   >
                     &gt;
                   </span>
@@ -537,7 +537,7 @@ export default function HuntShell() {
                   <p
                     role="status"
                     className={`text-[13px] ${
-                      feedback.kind === "error" ? "text-danger" : "text-amber"
+                      feedback.kind === "error" ? "text-danger" : "text-scale"
                     }`}
                   >
                     {feedback.text}
@@ -571,7 +571,7 @@ export default function HuntShell() {
                 {level.revealedHints.map((h, i) => (
                   <li
                     key={i}
-                    className="pop-3d border-l-2 border-l-phos/40 pl-3 text-[13px] leading-relaxed text-ink/80"
+                    className="pop-3d border-l-2 border-l-ember/40 pl-3 text-[13px] leading-relaxed text-ink/80"
                   >
                     {h}
                   </li>
@@ -593,7 +593,7 @@ export default function HuntShell() {
                       : takeHint()
                   }
                   loading={hinting}
-                  loadingLabel="Decrypting"
+                  loadingLabel="Working"
                   disabled={busy}
                   className="mt-4 w-full"
                 >
@@ -609,7 +609,7 @@ export default function HuntShell() {
                 </p>
               )}
 
-              <p className="mt-3 border-t border-phos/10 pt-2.5 text-[10px] leading-relaxed tracked text-ink-dim">
+              <p className="mt-3 border-t border-ember/10 pt-2.5 text-[10px] leading-relaxed tracked text-ink-dim">
                 {state.hintBudget} hints for the whole hunt. They get dearer
                 each time you go back to the same lock.
               </p>
@@ -627,13 +627,13 @@ export default function HuntShell() {
                       <span className="text-[9px] tracked text-ink-dim/70">
                         {k.codename}
                       </span>
-                      <span className="ml-auto text-[13px] text-phos">
+                      <span className="ml-auto text-[13px] text-ember">
                         {k.answer}
                       </span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-3 border-t border-phos/10 pt-2.5 text-[10px] leading-relaxed tracked text-ink-dim">
+                <p className="mt-3 border-t border-ember/10 pt-2.5 text-[10px] leading-relaxed tracked text-ink-dim">
                   Every answer feeds the next lock. Yours are kept here.
                 </p>
               </div>
@@ -656,14 +656,14 @@ export default function HuntShell() {
       {/* ------------------------- leave / sign out ----------------- */}
       <ConfirmModal
         open={confirm === "exit"}
-        title="Leave the terminal?"
+        title="Climb back out?"
         body="You will go back to the briefing page. Your progress is saved on the server and nothing is lost — sign back in with the same team name and passphrase whenever you want."
         note="Your clock keeps running while you are away."
         confirmLabel="Leave"
         confirmingLabel="Leaving"
         cancelLabel="Stay here"
         loading={leaving}
-        onConfirm={leaveTerminal}
+        onConfirm={leaveDig}
         onCancel={() => setConfirm(null)}
       />
 
@@ -673,7 +673,7 @@ export default function HuntShell() {
         body={`This is one of your ${state.hintBudget} hints for the whole hunt, and you have ${budgetLeft} left. There is no way to get it back.`}
         note={`+${level?.nextHintCostMinutes ?? 0} minutes will be added to your time.`}
         confirmLabel="Spend it"
-        confirmingLabel="Decrypting"
+        confirmingLabel="Working"
         cancelLabel="Keep thinking"
         loading={hinting}
         onConfirm={() => {
@@ -704,7 +704,7 @@ export default function HuntShell() {
           className="fixed inset-0 z-[60] grid place-items-center bg-void/92 px-4 backdrop-blur-sm"
         >
           <div className="panel notch brackets pop-3d w-full max-w-lg p-6 text-center sm:p-9">
-            <p className="text-[10px] tracked text-phos glow">
+            <p className="text-[10px] tracked text-ember glow">
               {solvedNote.finished ? "Final lock released" : "Lock released"}
             </p>
             <p className="mt-4 text-lg leading-relaxed text-ink sm:text-xl">
@@ -728,8 +728,8 @@ export default function HuntShell() {
 function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number }) {
   return (
     <section className="panel notch brackets pop-3d mx-auto max-w-2xl p-6 text-center sm:p-10">
-      <p className="text-[10px] tracked text-phos glow">Vault open</p>
-      <h1 className="mt-3 text-3xl text-phos glow sm:text-4xl">Hunt complete</h1>
+      <p className="text-[10px] tracked text-ember glow">Vault open</p>
+      <h1 className="mt-3 text-3xl text-ember glow sm:text-4xl">Hunt complete</h1>
       <p className="mx-auto mt-4 max-w-prose text-[14px] leading-relaxed text-ink/85">
         {state.totalLevels} locks, {state.totalLevels} keys. {state.team.name} is
         through.
@@ -737,15 +737,15 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
 
       {/* The point of this page: something the answer box did not already
           give them. Organisers set it from the admin panel. */}
-      <div className="notch mt-7 border border-phos/30 bg-phos/[0.06] px-5 py-6 text-left sm:px-7">
-        <p className="text-[10px] tracked text-phos glow">Extraction</p>
+      <div className="notch mt-7 border border-ember/30 bg-ember/[0.06] px-5 py-6 text-left sm:px-7">
+        <p className="text-[10px] tracked text-ember glow">Extraction</p>
         <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-ink">
           {state.vaultNote ??
             "Find an organiser and say the last word out loud. They are expecting it."}
         </p>
       </div>
 
-      <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-phos/15 bg-phos/15 sm:grid-cols-3">
+      <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-3">
         {[
           ["Final time", formatDuration(elapsed)],
           ["Locks", `${state.totalLevels}/${state.totalLevels}`],
@@ -753,7 +753,7 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
         ].map(([k, v]) => (
           <div key={k} className="bg-panel px-3 py-4">
             <dt className="text-[9px] tracked text-ink-dim">{k}</dt>
-            <dd className="mt-1 text-[15px] tabular-nums text-phos">{v}</dd>
+            <dd className="mt-1 text-[15px] tabular-nums text-ember">{v}</dd>
           </div>
         ))}
       </dl>

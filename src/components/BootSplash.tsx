@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 
 const STEPS: [number, string][] = [
-  [0, "power on · node PILANI-01"],
-  [14, "mounting /clock-tower"],
-  [31, "shiv ganga uplink"],
+  [0, "strike a light · camp PILANI-01"],
+  [14, "unrolling the survey"],
+  [31, "crossing the shiv ganga"],
   [48, "cipher table · 5 locks"],
   [66, "plate archive"],
-  [82, "negotiating secure channel"],
-  [95, "vault seal verified"],
+  [82, "checking the seals"],
+  [95, "vault door holds"],
 ];
 
 const HOLD_MS = 1900; // full run before the splash tips away
@@ -89,7 +89,7 @@ export default function BootSplash() {
       aria-label="Loading BEP Cipher Hunt"
     >
       <div aria-hidden className="pointer-events-none absolute inset-0 grid-bg" />
-      <div aria-hidden className="crt-layer crt-lines" />
+      <div aria-hidden className="veil veil-grain" />
 
       <div className="relative flex w-full max-w-sm flex-col items-center gap-8 px-6">
         <div className="relative">
@@ -118,14 +118,14 @@ export default function BootSplash() {
         <div className="w-full">
           <div className="flex items-baseline justify-between text-[10px] tracked text-ink-dim">
             <span className="truncate">{line}</span>
-            <span className="ml-3 tabular-nums text-phos">
+            <span className="ml-3 tabular-nums text-ember">
               {String(progress).padStart(3, "0")}%
             </span>
           </div>
 
-          <div className="mt-2 h-[3px] w-full overflow-hidden bg-phos/12">
+          <div className="mt-2 h-[3px] w-full overflow-hidden bg-ember/12">
             <div
-              className="h-full bg-phos shadow-[0_0_14px] shadow-phos/70 transition-[width] duration-100 ease-out"
+              className="h-full bg-ember shadow-[0_0_14px] shadow-ember/70 transition-[width] duration-100 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>

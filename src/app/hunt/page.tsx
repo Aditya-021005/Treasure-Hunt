@@ -5,7 +5,7 @@ import { huntOpenNow } from "@/lib/hunt";
 import { hasPreviewAccess } from "@/lib/session";
 
 export const metadata: Metadata = {
-  title: "Terminal · BEP Cipher Hunt",
+  title: "The Descent · BEP Cipher Hunt",
   robots: { index: false, follow: false },
 };
 

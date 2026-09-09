@@ -23,14 +23,14 @@ export default function PlateGrid({ levelId, gate, onOpened }: Props) {
   if (gate.open) {
     return (
       <div className="panel notch brackets pop-3d p-5 sm:p-7">
-        <p className="text-[10px] tracked text-phos">Lock open</p>
+        <p className="text-[10px] tracked text-ember">Lock open</p>
         <p className="mt-2 max-w-prose text-[14px] leading-relaxed text-ink/85">
           {gate.rewardCaption}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
           {gate.reward?.map((t, i) => (
             <div key={`${t.id}-${i}`} className="flex flex-col items-center gap-2">
-              <div className="grid h-24 w-24 place-items-center border border-phos/30 bg-panel-2 text-5xl shadow-[0_0_40px_-12px] shadow-phos/40 sm:h-28 sm:w-28 sm:text-6xl">
+              <div className="grid h-24 w-24 place-items-center border border-ember/30 bg-panel-2 text-5xl shadow-[0_0_40px_-12px] shadow-ember/40 sm:h-28 sm:w-28 sm:text-6xl">
                 <span aria-hidden>{t.glyph}</span>
                 <span className="sr-only">{t.label}</span>
               </div>
@@ -72,7 +72,7 @@ export default function PlateGrid({ levelId, gate, onOpened }: Props) {
       setPicked([]);
       setTimeout(() => setWrong(false), 500);
     } catch {
-      setMessage("Connection lost. Try again.");
+      setMessage("The dark swallowed that. Try again.");
     } finally {
       setBusy(false);
     }
@@ -98,15 +98,15 @@ export default function PlateGrid({ levelId, gate, onOpened }: Props) {
               aria-label={`${tile.label}${active ? `, selected ${order + 1}` : ""}`}
               className={`tilt relative grid aspect-square place-items-center border text-4xl sm:text-5xl ${
                 active
-                  ? "border-phos bg-phos/10 shadow-[0_0_30px_-8px] shadow-phos/60"
-                  : "border-phos/15 bg-panel-2 hover:border-phos/45 hover:bg-phos/5"
+                  ? "border-ember bg-ember/10 shadow-[0_0_30px_-8px] shadow-ember/60"
+                  : "border-ember/15 bg-panel-2 hover:border-ember/45 hover:bg-ember/5"
               } ${busy ? "opacity-60" : ""}`}
             >
               <span aria-hidden className={active ? "" : "opacity-80"}>
                 {tile.glyph}
               </span>
               {active && (
-                <span className="absolute top-1 left-1 grid h-5 w-5 place-items-center bg-phos text-[11px] font-bold text-void">
+                <span className="absolute top-1 left-1 grid h-5 w-5 place-items-center bg-ember text-[11px] font-bold text-void">
                   {order + 1}
                 </span>
               )}

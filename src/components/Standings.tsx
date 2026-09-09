@@ -17,7 +17,7 @@ export default function Standings() {
         const data = await res.json();
         if (alive) setRows(data.rows ?? []);
       } catch {
-        if (alive) setError("Could not reach the server.");
+        if (alive) setError("Nothing answers from below.");
       }
     };
     load();
@@ -31,8 +31,8 @@ export default function Standings() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
       <header className="mb-8">
-        <p className="text-[10px] tracked text-amber">Live</p>
-        <h1 className="mt-2 text-3xl text-phos glow sm:text-4xl">Standings</h1>
+        <p className="text-[10px] tracked text-scale">Live</p>
+        <h1 className="mt-2 text-3xl text-ember glow sm:text-4xl">Standings</h1>
         <p className="mt-2 max-w-prose text-[13px] text-ink-dim">
           Ranked by locks opened, then by time taken. Hint penalties are already
           folded into the clock. Refreshes every 20 seconds.
@@ -60,7 +60,7 @@ export default function Standings() {
         <div className="panel notch overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-phos/15 text-[9px] tracked text-ink-dim">
+              <tr className="border-b border-ember/15 text-[9px] tracked text-ink-dim">
                 <th className="px-4 py-3 font-normal">#</th>
                 <th className="px-4 py-3 font-normal">Team</th>
                 <th className="px-4 py-3 font-normal">Locks</th>
@@ -72,8 +72,8 @@ export default function Standings() {
               {rows.map((r) => (
                 <tr
                   key={`${r.rank}-${r.name}`}
-                  className={`border-b border-phos/8 last:border-0 transition-colors ${
-                    r.isYou ? "bg-phos/8" : "hover:bg-phos/4"
+                  className={`border-b border-ember/8 last:border-0 transition-colors ${
+                    r.isYou ? "bg-ember/8" : "hover:bg-ember/4"
                   }`}
                 >
                   <td className="px-4 py-3 text-[13px] tabular-nums text-ink-dim">
@@ -81,15 +81,15 @@ export default function Standings() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`text-[14px] ${r.isYou ? "text-phos glow" : "text-ink"}`}
+                      className={`text-[14px] ${r.isYou ? "text-ember glow" : "text-ink"}`}
                     >
                       {r.name}
                     </span>
                     {r.isYou && (
-                      <span className="ml-2 text-[9px] tracked text-phos/70">you</span>
+                      <span className="ml-2 text-[9px] tracked text-ember/70">you</span>
                     )}
                     {r.finished && (
-                      <span className="ml-2 text-[9px] tracked text-amber">cleared</span>
+                      <span className="ml-2 text-[9px] tracked text-scale">cleared</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -99,10 +99,10 @@ export default function Standings() {
                       </span>
                       <span
                         aria-hidden
-                        className="hidden h-1 w-16 bg-phos/15 sm:block"
+                        className="hidden h-1 w-16 bg-ember/15 sm:block"
                       >
                         <span
-                          className="block h-full bg-phos"
+                          className="block h-full bg-ember"
                           style={{ width: `${(r.solved / r.totalLevels) * 100}%` }}
                         />
                       </span>
@@ -123,7 +123,7 @@ export default function Standings() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/hunt" className="btn notch">
-          Back to terminal
+          Back down
         </Link>
         <Link href="/" className="btn btn-ghost notch">
           Briefing

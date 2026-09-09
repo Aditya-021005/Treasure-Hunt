@@ -71,17 +71,17 @@ export default function Countdown({ target, serverNow, label, onElapsed }: Props
   return (
     <div>
       {label && (
-        <p className="text-[10px] tracked text-amber glow-amber">{label}</p>
+        <p className="text-[10px] tracked text-scale glow-scale">{label}</p>
       )}
 
       <div
-        className="mt-3 grid grid-cols-4 gap-px overflow-hidden border border-phos/20 bg-phos/20"
+        className="mt-3 grid grid-cols-4 gap-px overflow-hidden border border-ember/20 bg-ember/20"
         role="timer"
         aria-live="off"
       >
         {cells.map(([unit, value]) => (
           <div key={unit} className="bg-panel px-2 py-3 text-center sm:px-4 sm:py-4">
-            <div className="text-2xl tabular-nums text-phos glow sm:text-4xl">
+            <div className="text-2xl tabular-nums text-ember glow sm:text-4xl">
               {value}
             </div>
             <div className="mt-1 text-[9px] tracked text-ink-dim">{unit}</div>

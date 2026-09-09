@@ -91,7 +91,7 @@ export default function LevelEditor({
       onSaved();
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setErrors(["Could not reach the server."]);
+      setErrors(["Nothing answers from below."]);
     } finally {
       setBusy(false);
     }
@@ -109,7 +109,7 @@ export default function LevelEditor({
   return (
     <section className="panel notch brackets p-4 sm:p-6">
       <header className="flex flex-wrap items-center gap-3">
-        <h2 className="text-[10px] tracked text-phos">Puzzles</h2>
+        <h2 className="text-[10px] tracked text-ember">Puzzles</h2>
         <span className="text-[10px] tracked text-ink-dim">
           {levels.length} locks · {custom ? "saved in the database" : "from the code seed"}
         </span>
@@ -138,7 +138,7 @@ export default function LevelEditor({
         </ul>
       )}
       {saved && (
-        <p className="mt-4 border border-phos/40 bg-phos/5 px-4 py-2 text-[12px] text-phos">
+        <p className="mt-4 border border-ember/40 bg-ember/5 px-4 py-2 text-[12px] text-ember">
           Saved. Players see the new puzzles on their next request.
         </p>
       )}
@@ -152,10 +152,10 @@ export default function LevelEditor({
                 onClick={() => setOpen(open === i ? null : i)}
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
-                <span className="text-[10px] tracked text-amber">
+                <span className="text-[10px] tracked text-scale">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="truncate text-[13px] text-phos">{l.title}</span>
+                <span className="truncate text-[13px] text-ember">{l.title}</span>
                 <span className="truncate text-[10px] tracked text-ink-dim">
                   {l.codename}
                 </span>
@@ -188,7 +188,7 @@ export default function LevelEditor({
             </div>
 
             {open === i && (
-              <div className="border-t border-phos/12 p-3 sm:p-4">
+              <div className="border-t border-ember/12 p-3 sm:p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field
                     id={`code-${i}`}
@@ -216,7 +216,7 @@ export default function LevelEditor({
                 <p className={`${label} mt-5`}>Puzzle content</p>
                 <div className="flex flex-col gap-2">
                   {l.blocks.map((b, bi) => (
-                    <div key={bi} className="border border-phos/15 bg-void/40 p-3">
+                    <div key={bi} className="border border-ember/15 bg-void/40 p-3">
                       <div className="flex items-center gap-2">
                         <select
                           value={b.kind}
@@ -289,7 +289,7 @@ export default function LevelEditor({
                   onClick={() =>
                     patch(i, { blocks: [...l.blocks, { kind: "prose", text: "" }] })
                   }
-                  className="mt-2 text-[10px] tracked text-ink-dim underline-offset-4 hover:text-phos hover:underline"
+                  className="mt-2 text-[10px] tracked text-ink-dim underline-offset-4 hover:text-ember hover:underline"
                 >
                   + add block
                 </button>
@@ -331,7 +331,7 @@ export default function LevelEditor({
                       type="checkbox"
                       checked={l.showLength !== false}
                       onChange={(e) => patch(i, { showLength: e.target.checked })}
-                      className="h-4 w-4 accent-[#35ff9b]"
+                      className="h-4 w-4 accent-[#d9a441]"
                     />
                     Show the answer length to players
                   </label>
@@ -346,7 +346,7 @@ export default function LevelEditor({
                 />
 
                 {l.gate ? (
-                  <p className="mt-4 border-l-2 border-l-amber pl-3 text-[11px] leading-relaxed text-amber">
+                  <p className="mt-4 border-l-2 border-l-scale pl-3 text-[11px] leading-relaxed text-scale">
                     This lock has an interactive tile grid. Its tiles and the
                     correct order are kept as-is — editing them needs the JSON
                     view, which is not in this panel yet.
@@ -396,7 +396,7 @@ function IconBtn({
       className={`grid h-7 w-7 place-items-center border text-[12px] transition-colors disabled:opacity-25 ${
         danger
           ? "border-danger/30 text-danger hover:bg-danger/10"
-          : "border-phos/25 text-phos hover:bg-phos/10"
+          : "border-ember/25 text-ember hover:bg-ember/10"
       }`}
     >
       {children}
@@ -473,7 +473,7 @@ function ListField({
       <button
         type="button"
         onClick={() => onChange([...values, ""])}
-        className="mt-1.5 text-[10px] tracked text-ink-dim underline-offset-4 hover:text-phos hover:underline"
+        className="mt-1.5 text-[10px] tracked text-ink-dim underline-offset-4 hover:text-ember hover:underline"
       >
         + add
       </button>

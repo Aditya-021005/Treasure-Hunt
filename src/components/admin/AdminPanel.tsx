@@ -97,7 +97,7 @@ export default function AdminPanel() {
       setDenied(false);
       await load();
     } catch {
-      setLoginError("Could not reach the server.");
+      setLoginError("Nothing answers from below.");
     } finally {
       setLoginBusy(false);
     }
@@ -107,8 +107,8 @@ export default function AdminPanel() {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-4">
         <form onSubmit={signIn} className="panel notch brackets p-6 sm:p-8">
-          <p className="text-[10px] tracked text-amber glow-amber">Restricted</p>
-          <h1 className="mt-3 text-2xl text-phos glow">Admin sign-in</h1>
+          <p className="text-[10px] tracked text-scale glow-scale">Restricted</p>
+          <h1 className="mt-3 text-2xl text-ember glow">Admin sign-in</h1>
           <p className="mt-2 text-[12px] leading-relaxed text-ink-dim">
             Enter the organiser credentials, or sign in on the main site with
             an account on the admin list.
@@ -156,7 +156,7 @@ export default function AdminPanel() {
 
           <Link
             href="/"
-            className="mt-4 block text-center text-[10px] tracked text-ink-dim underline-offset-4 hover:text-phos hover:underline"
+            className="mt-4 block text-center text-[10px] tracked text-ink-dim underline-offset-4 hover:text-ember hover:underline"
           >
             Back to the briefing
           </Link>
@@ -179,8 +179,8 @@ export default function AdminPanel() {
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-3">
         <div>
-          <p className="text-[10px] tracked text-amber">Control</p>
-          <h1 className="mt-1 text-2xl text-phos glow sm:text-3xl">Admin</h1>
+          <p className="text-[10px] tracked text-scale">Control</p>
+          <h1 className="mt-1 text-2xl text-ember glow sm:text-3xl">Admin</h1>
         </div>
         <p className="max-w-full truncate text-[10px] tracked text-ink-dim">
           signed in as {data.you.email}
@@ -207,13 +207,13 @@ export default function AdminPanel() {
       </header>
 
       {note && (
-        <p className="mb-5 border border-phos/30 bg-phos/5 px-4 py-2 text-[12px] text-phos">
+        <p className="mb-5 border border-ember/30 bg-ember/5 px-4 py-2 text-[12px] text-ember">
           {note}
         </p>
       )}
 
       {/* ------------------------------- stats ---------------------- */}
-      <div className="mb-6 grid grid-cols-2 gap-px overflow-hidden border border-phos/15 bg-phos/15 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-4">
         {[
           ["Teams", data.totals.teams],
           ["Players", data.totals.users],
@@ -222,7 +222,7 @@ export default function AdminPanel() {
         ].map(([k, v]) => (
           <div key={String(k)} className="bg-panel px-4 py-3">
             <p className="text-[9px] tracked text-ink-dim">{k}</p>
-            <p className="mt-1 text-2xl tabular-nums text-phos">{v}</p>
+            <p className="mt-1 text-2xl tabular-nums text-ember">{v}</p>
           </div>
         ))}
       </div>
@@ -230,10 +230,10 @@ export default function AdminPanel() {
       {/* ------------------------------- window --------------------- */}
       <section className="panel notch brackets mb-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-[10px] tracked text-phos">Event window</h2>
+          <h2 className="text-[10px] tracked text-ember">Event window</h2>
           <span
             className={`text-[10px] tracked ${
-              phase === "open" ? "text-phos" : "text-amber"
+              phase === "open" ? "text-ember" : "text-scale"
             }`}
           >
             currently {phase}
@@ -301,7 +301,7 @@ export default function AdminPanel() {
               onClick={() =>
                 post("/api/admin/event", { action: "env" }, "Back to the env vars.")
               }
-              className="pb-2 text-[10px] tracked text-ink-dim underline-offset-4 hover:text-phos hover:underline"
+              className="pb-2 text-[10px] tracked text-ink-dim underline-offset-4 hover:text-ember hover:underline"
             >
               hand control back to HUNT_OPENS_AT
             </button>
@@ -312,7 +312,7 @@ export default function AdminPanel() {
       {/* ------------------------------- vault ---------------------- */}
       <section className="panel notch brackets mb-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-[10px] tracked text-phos">Vault page</h2>
+          <h2 className="text-[10px] tracked text-ember">Vault page</h2>
           <span className="text-[10px] tracked text-ink-dim">
             {data.vaultNote ? "set here" : "using the built-in line"}
           </span>
@@ -354,7 +354,7 @@ export default function AdminPanel() {
             <button
               type="button"
               onClick={() => setVaultNote(null)}
-              className="text-[10px] tracked text-ink-dim underline-offset-4 hover:text-phos hover:underline"
+              className="text-[10px] tracked text-ink-dim underline-offset-4 hover:text-ember hover:underline"
             >
               discard changes
             </button>
@@ -373,8 +373,8 @@ export default function AdminPanel() {
 
       {/* -------------------------------- teams --------------------- */}
       <section className="panel notch brackets mb-6">
-        <div className="flex items-center gap-3 border-b border-phos/12 px-4 py-3">
-          <h2 className="text-[10px] tracked text-phos">Teams</h2>
+        <div className="flex items-center gap-3 border-b border-ember/12 px-4 py-3">
+          <h2 className="text-[10px] tracked text-ember">Teams</h2>
           <span className="text-[10px] tracked text-ink-dim">
             {data.teams.length} registered
           </span>
@@ -388,12 +388,12 @@ export default function AdminPanel() {
           <>
           {/* Phones get cards; a 7-column table cannot be made to fit and
               a horizontally scrolling one is unusable on the day. */}
-          <ul className="flex flex-col divide-y divide-phos/8 lg:hidden">
+          <ul className="flex flex-col divide-y divide-ember/8 lg:hidden">
             {data.teams.map((t) => (
               <li key={t.id} className="flex flex-col gap-2 px-4 py-4">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="text-[14px] text-ink">{t.name}</span>
-                  <span className="text-[12px] tracking-widest text-phos">
+                  <span className="text-[12px] tracking-widest text-ember">
                     {t.code}
                   </span>
                   <span className="ml-auto text-[13px] tabular-nums text-ink">
@@ -416,7 +416,7 @@ export default function AdminPanel() {
                   {t.members.map((m) => (
                     <li key={m.email} className="text-[11px] text-ink-dim">
                       {m.name}
-                      {m.isCaptain && <span className="text-amber"> ·c</span>}
+                      {m.isCaptain && <span className="text-scale"> ·c</span>}
                       <span className="block text-[9px] break-all opacity-60">
                         {m.email}
                       </span>
@@ -428,7 +428,7 @@ export default function AdminPanel() {
                   <button
                     type="button"
                     onClick={() => setPending({ team: t, action: "reset" })}
-                    className="flex-1 border border-phos/25 px-2 py-2 text-[9px] tracked text-phos hover:bg-phos/10"
+                    className="flex-1 border border-ember/25 px-2 py-2 text-[9px] tracked text-ember hover:bg-ember/10"
                   >
                     Reset
                   </button>
@@ -446,7 +446,7 @@ export default function AdminPanel() {
 
           <table className="hidden w-full border-collapse text-left lg:table">
             <thead>
-              <tr className="border-b border-phos/12 text-[9px] tracked text-ink-dim">
+              <tr className="border-b border-ember/12 text-[9px] tracked text-ink-dim">
                 <th className="px-4 py-2 font-normal">Team</th>
                 <th className="px-4 py-2 font-normal">Code</th>
                 <th className="px-4 py-2 font-normal">Members</th>
@@ -458,7 +458,7 @@ export default function AdminPanel() {
             </thead>
             <tbody>
               {data.teams.map((t) => (
-                <tr key={t.id} className="border-b border-phos/8 last:border-0 align-top">
+                <tr key={t.id} className="border-b border-ember/8 last:border-0 align-top">
                   <td className="px-4 py-3">
                     <p className="text-[13px] text-ink">{t.name}</p>
                     <p className="text-[9px] tracked text-ink-dim">
@@ -466,7 +466,7 @@ export default function AdminPanel() {
                       {t.finishedAt ? " · cleared" : ""}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-[12px] tracking-widest text-phos">
+                  <td className="px-4 py-3 text-[12px] tracking-widest text-ember">
                     {t.code}
                   </td>
                   <td className="px-4 py-3">
@@ -474,7 +474,7 @@ export default function AdminPanel() {
                       {t.members.map((m) => (
                         <li key={m.email} className="text-[11px] text-ink-dim">
                           {m.name}
-                          {m.isCaptain && <span className="text-amber"> ·c</span>}
+                          {m.isCaptain && <span className="text-scale"> ·c</span>}
                           <span className="block text-[9px] opacity-60">{m.email}</span>
                         </li>
                       ))}
@@ -494,7 +494,7 @@ export default function AdminPanel() {
                       <button
                         type="button"
                         onClick={() => setPending({ team: t, action: "reset" })}
-                        className="border border-phos/25 px-2 py-1 text-[9px] tracked text-phos hover:bg-phos/10"
+                        className="border border-ember/25 px-2 py-1 text-[9px] tracked text-ember hover:bg-ember/10"
                       >
                         Reset
                       </button>
@@ -565,7 +565,7 @@ export default function AdminPanel() {
         <div className="fixed inset-0 z-[70] grid place-items-center bg-void/92 px-4 backdrop-blur-sm">
           <div className="panel notch brackets pop-3d w-full max-w-md p-6 sm:p-8">
             <p className="text-[10px] tracked text-danger">Irreversible</p>
-            <h2 className="mt-3 text-xl text-phos glow">Wipe everything?</h2>
+            <h2 className="mt-3 text-xl text-ember glow">Wipe everything?</h2>
             <p className="mt-3 text-[14px] leading-relaxed text-ink/85">
               {data.totals.teams} teams and {data.totals.users} players will be
               deleted. There is no undo.

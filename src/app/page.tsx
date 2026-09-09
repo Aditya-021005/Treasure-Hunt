@@ -11,7 +11,7 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <p className="caret text-[11px] tracked text-ink-dim">Establishing link</p>
+          <p className="caret text-[11px] tracked text-ink-dim">Striking a torch</p>
         </div>
       }
     >

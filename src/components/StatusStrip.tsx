@@ -31,15 +31,15 @@ export default function StatusStrip() {
   return (
     <div className="hud-strip">
       <div className="mx-auto flex max-w-6xl items-center gap-x-4 gap-y-1 overflow-hidden px-4 py-1.5 text-[9px] tracked whitespace-nowrap text-ink-dim sm:px-6">
-        <span className="flex items-center gap-1.5 text-phos/80">
-          <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-phos" />
-          Node Pilani-01
+        <span className="flex items-center gap-1.5 text-ember/80">
+          <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-ember" />
+          Undercroft Pilani-01
         </span>
 
         <span className="hidden sm:inline">28.3639°N 75.5870°E</span>
 
         <span className="hidden md:inline">
-          CH 07 <span className="text-phos/70">secure</span>
+          Torch <span className="text-ember/70">burning</span>
         </span>
 
         <span className="ml-auto flex items-center gap-2">
