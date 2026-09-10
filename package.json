@@ -12,10 +12,12 @@
     "db:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/db-check.mjs"
   },
   "dependencies": {
+    "@types/three": "^0.185.4",
     "next": "16.3.1",
     "postgres": "^3.4.9",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "three": "^0.186.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

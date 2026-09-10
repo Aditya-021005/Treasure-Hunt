@@ -10,6 +10,7 @@ import Telemetry from "@/components/Telemetry";
 import Btn from "@/components/Btn";
 import AnswerShape from "@/components/AnswerShape";
 import ConfirmModal from "@/components/ConfirmModal";
+import DragonLoader from "@/components/DragonLoader";
 import ScrambleIn from "@/components/ScrambleIn";
 import { formatDuration, pad2 } from "@/lib/format";
 import type { PublicLevel, TeamState } from "@/lib/types";
@@ -317,9 +318,11 @@ export default function HuntShell() {
   if (loading) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-6xl items-center justify-center px-4">
-        <p className="caret text-[11px] tracked text-ink-dim">
-          Striking a torch
-        </p>
+        <DragonLoader
+          size="md"
+          title="DESCENDING INTO THE UNDERCROFT..."
+          subtitle="Striking torches · Unlocking chamber seals"
+        />
       </div>
     );
   }

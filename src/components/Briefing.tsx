@@ -1,10 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import AccountPanel from "@/components/AccountPanel";
 import Countdown from "@/components/Countdown";
 import DragonEye from "@/components/DragonEye";
+import DragonLoader from "@/components/DragonLoader";
 import { BoardPreview, Faq, Steps } from "@/components/HomeSections";
 import Typewriter from "@/components/Typewriter";
 import {
@@ -13,6 +15,15 @@ import {
   WRONG_PENALTY_MINUTES,
   WRONG_STRIKES,
 } from "@/lib/rules";
+
+const Dragon3D = dynamic(() => import("@/components/Dragon3D"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[360px] lg:h-[580px] w-full items-center justify-center rounded-lg border border-ember/20 bg-panel/80 p-6 shadow-[0_0_40px_rgba(230,57,70,0.12)]">
+      <DragonLoader size="md" />
+    </div>
+  ),
+});
 import type { Me } from "@/lib/types";
 
 const BOOT = [
@@ -190,6 +201,11 @@ export default function Briefing() {
             ten plates, a passage that will not sit still, and a picture that
             talks. Every answer is the key to the next door.
           </p>
+
+          {/* 3D Animated Drake Lair with Volumetric Fire Breath */}
+          <div className="mt-6 max-w-2xl">
+            <Dragon3D />
+          </div>
 
           <Facts me={me} />
 

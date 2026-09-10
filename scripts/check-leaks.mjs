@@ -72,7 +72,21 @@ for (const target of targets) {
     const text = await readFile(file, "utf8");
     const haystack = text.toLowerCase();
     for (const [label, value] of checked) {
-      if (haystack.includes(value.toLowerCase())) {
+      const needle = value.toLowerCase();
+      let idx = 0;
+      let matched = false;
+      while ((idx = haystack.indexOf(needle, idx)) !== -1) {
+        const prev = idx > 0 ? haystack[idx - 1] : " ";
+        const next = idx + needle.length < haystack.length ? haystack[idx + needle.length] : " ";
+        const isPrevWord = /[a-z0-9]/.test(prev);
+        const isNextWord = /[a-z0-9]/.test(next);
+        if (!isPrevWord && !isNextWord) {
+          matched = true;
+          break;
+        }
+        idx += needle.length;
+      }
+      if (matched) {
         hits.push({ label, value, file: path.relative(root, file) });
       }
     }

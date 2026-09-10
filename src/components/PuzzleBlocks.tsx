@@ -142,7 +142,7 @@ function AltImage({
         width={200}
         height={260}
         draggable={false}
-        className="w-32 select-none drop-shadow-[0_0_40px_rgba(255,179,71,0.35)] sm:w-44"
+        className="w-32 select-none drop-shadow-[0_0_40px_rgba(223,168,75,0.35)] sm:w-44"
       />
 
       {caption ? (

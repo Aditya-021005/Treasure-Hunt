@@ -62,7 +62,7 @@ function Nav() {
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
           <DragonEye
             variant="nav"
-            className="h-7 w-11 shrink-0 text-ember-dim drop-shadow-[0_0_10px_rgba(255,106,21,0.55)] transition-transform group-hover:scale-110"
+            className="h-7 w-11 shrink-0 text-ember-dim drop-shadow-[0_0_10px_rgba(230,57,70,0.55)] transition-transform group-hover:scale-110"
           />
           <span className="hidden leading-tight sm:block">
             <span className="block text-[11px] tracked text-ink-dim transition-colors group-hover:text-ember">

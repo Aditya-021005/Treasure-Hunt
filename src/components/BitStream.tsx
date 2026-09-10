@@ -89,12 +89,13 @@ export default function BitStream() {
 
         const k = s.life / s.max;          // 0 hot, 1 spent
         const a = Math.sin((1 - k) * Math.PI * 0.5) * 0.85;
-        const g = Math.round(90 + (1 - k) * 130);
-        const b = Math.round(20 + (1 - k) * 90);
+        const r = Math.round(220 + (1 - k) * 35);
+        const g = Math.round(35 + (1 - k) * 130);
+        const b = Math.round(30 + (1 - k) * 45);
 
         const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
-        glow.addColorStop(0, `rgba(255, ${g}, ${b}, ${a})`);
-        glow.addColorStop(1, "rgba(255, 60, 0, 0)");
+        glow.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a})`);
+        glow.addColorStop(1, "rgba(180, 20, 25, 0)");
         ctx.fillStyle = glow;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2);

@@ -29,14 +29,14 @@ export default function DragonEye({
       {title ? <title>{title}</title> : null}
       <defs>
         <radialGradient id={iris} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff2cf" />
-          <stop offset="32%" stopColor="#ffb43c" />
-          <stop offset="70%" stopColor="#ff6a15" />
-          <stop offset="100%" stopColor="#7a1d05" />
+          <stop offset="0%" stopColor="#fff6ea" />
+          <stop offset="28%" stopColor="#dfa84b" />
+          <stop offset="68%" stopColor="#dc2626" />
+          <stop offset="100%" stopColor="#450a0a" />
         </radialGradient>
         <radialGradient id={burn} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ff8a2b" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#ff5a00" stopOpacity="0" />
+          <stop offset="0%" stopColor="#dc2626" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#991b1b" stopOpacity="0" />
         </radialGradient>
       </defs>
 
