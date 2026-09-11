@@ -181,10 +181,15 @@ export default function HuntShell() {
       pausePollRef.current = true;
       setFeedback(null);
       try {
+        const tabSwitches = Number(
+          (typeof window !== "undefined" &&
+            sessionStorage.getItem("bep_tab_switches")) ||
+            "0",
+        );
         const res = await fetch("/api/answer", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ level: level.id, answer }),
+          body: JSON.stringify({ level: level.id, answer, tabSwitches }),
         });
         const data = await res.json();
 
@@ -508,6 +513,15 @@ export default function HuntShell() {
                     ref={inputRef}
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      setFeedback({
+                        kind: "error",
+                        text: "Direct paste guarded. Decipher the clue and type the key with your own keystrokes.",
+                      });
+                      setShake(true);
+                      setTimeout(() => setShake(false), 500);
+                    }}
                     disabled={busy || hinting || cooldownLeft > 0}
                     autoComplete="off"
                     autoCapitalize="off"

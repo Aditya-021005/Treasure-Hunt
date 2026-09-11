@@ -158,14 +158,14 @@ export function Block({ block }: { block: PuzzleBlock }) {
   switch (block.kind) {
     case "prose":
       return (
-        <p className="max-w-prose text-[15px] leading-relaxed text-ink/85">
+        <p className="max-w-prose text-[15px] leading-relaxed text-ink/85 select-none">
           {block.text}
         </p>
       );
 
     case "cipher":
       return (
-        <figure className="panel notch brackets overflow-hidden">
+        <figure className="panel notch brackets overflow-hidden select-none">
           <figcaption className="flex items-center gap-3 border-b border-ember/12 bg-panel-2 px-4 py-2 text-[10px] tracked text-ink-dim">
             <span className="truncate">{block.caption ?? "ciphertext"}</span>
             <span className="hidden text-ink-dim/60 sm:inline">
@@ -179,14 +179,14 @@ export function Block({ block }: { block: PuzzleBlock }) {
           <ScrambleIn
             as="pre"
             text={block.text}
-            className="overflow-x-auto px-4 py-5 text-[13px] leading-[1.9] whitespace-pre-wrap break-words text-ember glow-soft sm:px-6 sm:text-[15px]"
+            className="overflow-x-auto px-4 py-5 text-[13px] leading-[1.9] whitespace-pre-wrap break-words text-ember glow-soft select-none sm:px-6 sm:text-[15px]"
           />
         </figure>
       );
 
     case "callout":
       return (
-        <aside className="panel-flush notch border-l-2 border-l-scale px-4 py-3.5 sm:px-5">
+        <aside className="panel-flush notch border-l-2 border-l-scale px-4 py-3.5 select-none sm:px-5">
           <p className="text-[10px] tracked text-scale/70">Field note</p>
           <p className="mt-1.5 text-[14px] text-scale glow-scale italic">{block.text}</p>
         </aside>
@@ -208,7 +208,7 @@ export function Block({ block }: { block: PuzzleBlock }) {
 
 export function Blocks({ blocks }: { blocks: PuzzleBlock[] }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div id="puzzle-blocks-container" className="flex flex-col gap-5 select-none">
       {blocks.map((b, i) => (
         <Block key={i} block={b} />
       ))}

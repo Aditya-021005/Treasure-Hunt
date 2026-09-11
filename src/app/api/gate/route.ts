@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { hasPreviewAccess, readSession } from "@/lib/session";
 import { checkGate } from "@/lib/hunt";
+import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 
 /**
  * POST /api/gate — check an interactive lock (e.g. the plate sequence on
@@ -8,6 +9,15 @@ import { checkGate } from "@/lib/hunt";
  * be solved by reading the bundle.
  */
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req.headers);
+  const rate = checkRateLimit(`gate:${ip}`, 15, 30_000);
+  if (!rate.allowed) {
+    return Response.json(
+      { error: `Plate mechanism throttled. Please wait ${rate.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds ?? 5) } },
+    );
+  }
+
   const userId = await readSession();
   if (!userId) return Response.json({ error: "Not signed in." }, { status: 401 });
 

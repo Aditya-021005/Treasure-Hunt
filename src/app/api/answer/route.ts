@@ -2,9 +2,19 @@ import type { NextRequest } from "next/server";
 import { hasPreviewAccess, readSession } from "@/lib/session";
 import { read } from "@/lib/store";
 import { submitAnswer, toPublicLevel } from "@/lib/hunt";
+import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 
 /** POST /api/answer — submit an answer for the team's current level. */
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req.headers);
+  const rate = checkRateLimit(`answer:${ip}`, 15, 30_000);
+  if (!rate.allowed) {
+    return Response.json(
+      { error: `Signal frequency exceeded. Mechanism locked for ${rate.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds ?? 5) } },
+    );
+  }
+
   const userId = await readSession();
   if (!userId) return Response.json({ error: "Not signed in." }, { status: 401 });
 
