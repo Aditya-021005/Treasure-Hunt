@@ -51,8 +51,9 @@ export default function Dragon3D({ className = "", compact = false }: Dragon3DPr
     }
   }, []);
 
-  // Fullscreen toggle handler with native Fullscreen API support
+  // Fullscreen toggle handler with native Fullscreen API support (desktop only)
   const toggleFullscreen = async () => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) return;
     const el = wrapperRef.current;
     if (!el) return;
 
@@ -683,11 +684,11 @@ export default function Dragon3D({ className = "", compact = false }: Dragon3DPr
           </button>
         </div>
 
-        {/* Real Fullscreen Button */}
+        {/* Real Fullscreen Button - Desktop only */}
         <button
           type="button"
           onClick={toggleFullscreen}
-          className="flex items-center gap-1.5 rounded border border-ember/25 bg-panel px-3 py-2 text-[10px] font-bold tracking-wider text-ink-dim transition-colors hover:border-ember hover:text-ember"
+          className="hidden sm:flex items-center gap-1.5 rounded border border-ember/25 bg-panel px-3 py-2 text-[10px] font-bold tracking-wider text-ink-dim transition-colors hover:border-ember hover:text-ember"
         >
           <span>{isFullscreen ? "✕ EXIT FULLSCREEN" : "⛶ FULLSCREEN"}</span>
           <span className="hidden text-[8px] opacity-60 sm:inline">(F)</span>
