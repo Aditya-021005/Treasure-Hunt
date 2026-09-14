@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
 import DragonEye from "@/components/DragonEye";
 
 interface AntiCheatGuardProps {
+  /** Explicit enable flag; only active when quiz is actively underway */
+  enabled?: boolean;
   /** Optional container element ID to bind copy interception, or defaults to document */
   containerId?: string;
   /** Callback fired whenever user returns after tabbing away */
@@ -18,10 +21,14 @@ const ZERO_WIDTH_SALT = "\u200B\u200C\u200D\uFEFF";
 const emptySubscribe = () => () => {};
 
 export default function AntiCheatGuard({
+  enabled = true,
   containerId,
   onTabSwitch,
   toastDuration = 4500,
 }: AntiCheatGuardProps) {
+  const pathname = usePathname();
+  const isQuizActive = Boolean(enabled && pathname === "/hunt");
+
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -64,7 +71,7 @@ export default function AntiCheatGuard({
 
   // 1. Console Security Banner
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isQuizActive || typeof window === "undefined") return;
     const styleTitle =
       "color: #e63946; font-size: 14px; font-weight: bold; text-shadow: 0 0 8px rgba(230,57,70,0.6);";
     const styleBody = "color: #dfa84b; font-size: 11px; font-family: monospace;";
@@ -82,10 +89,12 @@ export default function AntiCheatGuard({
       "%c⚠️ SOLVE WITH YOUR OWN WITS. THE ELDER DRAKE IS WATCHING.",
       styleWarn
     );
-  }, []);
+  }, [isQuizActive]);
 
   // 2. Clipboard Poisoning / Anti-Copy
   useEffect(() => {
+    if (!isQuizActive) return;
+
     const handleCopy = (e: ClipboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (
@@ -121,10 +130,12 @@ export default function AntiCheatGuard({
     return () => {
       document.removeEventListener("copy", handleCopy);
     };
-  }, [containerId]);
+  }, [isQuizActive, containerId]);
 
   // 3. Tab-Switch / Out-of-Focus Proctoring ("Dragon Eye Surveillance")
   useEffect(() => {
+    if (!isQuizActive) return;
+
     let isAway = false;
 
     const handleLeave = () => {
@@ -189,16 +200,16 @@ export default function AntiCheatGuard({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [onTabSwitch]);
+  }, [isQuizActive, onTabSwitch]);
 
   // Auto-hide warning toast
   useEffect(() => {
-    if (!showWarning) return;
+    if (!isQuizActive || !showWarning) return;
     const timer = setTimeout(() => {
       setShowWarning(false);
     }, toastDuration);
     return () => clearTimeout(timer);
-  }, [showWarning, toastDuration]);
+  }, [isQuizActive, showWarning, toastDuration]);
 
   // Handle unlock submission
   const handleUnlockSubmit = async (e: React.FormEvent) => {
@@ -243,7 +254,7 @@ export default function AntiCheatGuard({
     }
   };
 
-  if (!isMounted) return null;
+  if (!isMounted || !isQuizActive) return null;
 
   /* ---------------------- Lockdown Fullscreen Modal ---------------------- */
   if (isLockedDown) {

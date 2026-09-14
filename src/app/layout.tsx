@@ -7,7 +7,6 @@ import BootSplash from "@/components/BootSplash";
 import NavLink from "@/components/NavLink";
 import PageTransition from "@/components/PageTransition";
 import StatusStrip from "@/components/StatusStrip";
-import AntiCheatGuard from "@/components/AntiCheatGuard";
 import "./globals.css";
 
 /* Gothic condensed — a face for things carved into a dungeon wall. */
@@ -104,7 +103,6 @@ export default function RootLayout({
     >
       <body className="relative min-h-dvh antialiased" suppressHydrationWarning>
         <BootSplash />
-        <AntiCheatGuard />
 
         {/* Background layers — decorative, never intercept pointer events */}
         <div aria-hidden className="pointer-events-none fixed inset-0 z-0 grid-bg" />

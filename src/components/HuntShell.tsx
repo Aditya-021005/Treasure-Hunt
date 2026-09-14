@@ -12,6 +12,7 @@ import AnswerShape from "@/components/AnswerShape";
 import ConfirmModal from "@/components/ConfirmModal";
 import DragonLoader from "@/components/DragonLoader";
 import ScrambleIn from "@/components/ScrambleIn";
+import AntiCheatGuard from "@/components/AntiCheatGuard";
 import { formatDuration, pad2 } from "@/lib/format";
 import type { PublicLevel, TeamState } from "@/lib/types";
 
@@ -347,6 +348,8 @@ export default function HuntShell() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <AntiCheatGuard enabled={Boolean(!loading && state && level && !state.finished)} />
+
       {/* ----------------------------- status bar ------------------- */}
       <div className="panel notch brackets mb-6 flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3 sm:px-5">
         <button
