@@ -152,8 +152,6 @@ export async function joinTeam(
     if (!team) return "unknown" as const;
     if (team.memberIds.includes(userId)) return "ok" as const;
     if (team.memberIds.length >= MAX_TEAM_SIZE) return "full" as const;
-    // Once the hunt is underway, a team's roster is fixed.
-    if (team.startedAt !== null) return "started" as const;
 
     team.memberIds.push(userId);
     user.teamId = team.id;
@@ -173,12 +171,6 @@ export async function joinTeam(
         error: `That team is full (${MAX_TEAM_SIZE} members).`,
         status: 409,
       };
-    case "started":
-      return {
-        ok: false,
-        error: "That team has already started the hunt and is locked.",
-        status: 409,
-      };
     default:
       return { ok: true, me: await getMe(userId) };
   }
@@ -190,7 +182,6 @@ export async function leaveTeam(userId: string): Promise<TeamActionResult> {
     if (!user) return "no-user" as const;
     const team = user.teamId ? db.teams[user.teamId] : undefined;
     if (!team) return "none" as const;
-    if (team.startedAt !== null) return "started" as const;
 
     team.memberIds = team.memberIds.filter((id) => id !== userId);
     user.teamId = null;
@@ -211,12 +202,6 @@ export async function leaveTeam(userId: string): Promise<TeamActionResult> {
       return { ok: false, error: "Sign in first.", status: 401 };
     case "none":
       return { ok: false, error: "You are not on a team.", status: 400 };
-    case "started":
-      return {
-        ok: false,
-        error: "The hunt has started — the roster is locked.",
-        status: 409,
-      };
     default:
       return { ok: true, me: await getMe(userId) };
   }

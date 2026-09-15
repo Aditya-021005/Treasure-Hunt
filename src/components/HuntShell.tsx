@@ -13,6 +13,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import DragonLoader from "@/components/DragonLoader";
 import ScrambleIn from "@/components/ScrambleIn";
 import AntiCheatGuard from "@/components/AntiCheatGuard";
+import DragonEye from "@/components/DragonEye";
 import { formatDuration, pad2 } from "@/lib/format";
 import type { PublicLevel, TeamState } from "@/lib/types";
 
@@ -37,6 +38,10 @@ export default function HuntShell() {
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);      // answer submission
   const [hinting, setHinting] = useState(false);  // hint reveal
+  const [gateStatus, setGateStatus] = useState<{
+    error: string;
+    opensAt?: number;
+  } | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [shake, setShake] = useState(false);
   const [solvedNote, setSolvedNote] = useState<{
@@ -67,8 +72,13 @@ export default function HuntShell() {
           return;
         }
         if (res.status === 403) {
-          // Hunt not open, or no team yet. The briefing page explains both.
-          router.replace("/?locked=1");
+          // Hunt not open or team not created yet — render chamber locked view on /hunt
+          const data = await res.json().catch(() => ({}));
+          if (!alive) return;
+          setGateStatus({
+            error: data.error || "The chamber is sealed.",
+            opensAt: data.opensAt,
+          });
           return;
         }
         const data = await res.json();
@@ -329,6 +339,38 @@ export default function HuntShell() {
           title="DESCENDING INTO THE UNDERCROFT..."
           subtitle="Striking torches · Unlocking chamber seals"
         />
+      </div>
+    );
+  }
+
+  if (gateStatus) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 py-12 text-center">
+        <AntiCheatGuard enabled={true} />
+        <section className="panel notch brackets pop-3d w-full p-8 text-center sm:p-12">
+          <DragonEye variant="lockdown" className="mx-auto mb-4 h-16 w-24" />
+          <p className="font-mono text-[10px] font-bold tracking-[0.25em] text-danger uppercase">
+            [ CHAMBER LOCKED // DESCENT SEALED ]
+          </p>
+          <h1 className="mt-2 text-xl font-bold uppercase tracking-wider text-ember glow sm:text-2xl">
+            THE VAULT REMAINS SEALED
+          </h1>
+          <p className="mt-3 text-xs leading-relaxed text-ink-dim sm:text-sm">
+            {gateStatus.error}
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/" className="btn notch">
+              Return to Surface
+            </Link>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="btn btn-ghost notch"
+            >
+              Check Chamber Seal
+            </button>
+          </div>
+        </section>
       </div>
     );
   }

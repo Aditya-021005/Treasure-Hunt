@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import HuntShell from "@/components/HuntShell";
-import { huntOpenNow } from "@/lib/hunt";
-import { hasPreviewAccess } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "The Descent · BEP Cipher Hunt",
@@ -18,9 +15,5 @@ export const metadata: Metadata = {
  * panel takes effect on the page itself and not just in the API.
  */
 export default async function HuntPage() {
-  if (!(await huntOpenNow()) && !(await hasPreviewAccess())) {
-    redirect("/?locked=1");
-  }
-
   return <HuntShell />;
 }
