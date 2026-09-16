@@ -813,13 +813,14 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
 
       {/* The point of this page: something the answer box did not already
           give them. Organisers set it from the admin panel. */}
-      <div className="notch mt-7 border border-ember/30 bg-ember/[0.06] px-5 py-6 text-left sm:px-7">
-        <p className="text-[10px] tracked text-ember glow">Extraction</p>
-        <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-ink">
-          {state.vaultNote ??
-            "Find an organiser and say the last word out loud. They are expecting it."}
-        </p>
-      </div>
+      {state.vaultNote ? (
+        <div className="notch mt-7 border border-ember/30 bg-ember/[0.06] px-5 py-6 text-left sm:px-7">
+          <p className="text-[10px] tracked text-ember glow">Extraction</p>
+          <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-ink">
+            {state.vaultNote}
+          </p>
+        </div>
+      ) : null}
 
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-3">
         {[
