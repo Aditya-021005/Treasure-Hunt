@@ -14,6 +14,7 @@ import DragonLoader from "@/components/DragonLoader";
 import ScrambleIn from "@/components/ScrambleIn";
 import AntiCheatGuard from "@/components/AntiCheatGuard";
 import DragonEye from "@/components/DragonEye";
+import RulesGate from "@/components/RulesGate";
 import { formatDuration, pad2 } from "@/lib/format";
 import type { PublicLevel, TeamState } from "@/lib/types";
 
@@ -53,6 +54,15 @@ export default function HuntShell() {
   const [signingOut, setSigningOut] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [rulesAccepted, setRulesAccepted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem("bep_rules_accepted") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [showRulesModal, setShowRulesModal] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   /** Which lock the screen is currently showing, readable from callbacks. */
@@ -312,6 +322,7 @@ export default function HuntShell() {
         sessionStorage.removeItem("bep_locked_down");
         localStorage.removeItem("bep_locked_down");
         sessionStorage.setItem("bep_tab_switches", "0");
+        sessionStorage.removeItem("bep_rules_accepted");
       } catch {}
       await fetch("/api/auth/signout", { method: "POST" });
       router.replace("/");
@@ -402,9 +413,31 @@ export default function HuntShell() {
     );
   }
 
+  if (state && !state.finished && !rulesAccepted) {
+    return (
+      <RulesGate
+        teamName={state.team.name}
+        onAccept={() => {
+          try {
+            sessionStorage.setItem("bep_rules_accepted", "true");
+          } catch {}
+          setRulesAccepted(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-      <AntiCheatGuard enabled={Boolean(!loading && state && level && !state.finished)} />
+      <AntiCheatGuard enabled={Boolean(!loading && state && level && !state.finished && rulesAccepted)} />
+
+      {showRulesModal && (
+        <RulesGate
+          isModal={true}
+          teamName={state.team.name}
+          onClose={() => setShowRulesModal(false)}
+        />
+      )}
 
       {/* ----------------------------- status bar ------------------- */}
       <div className="panel notch brackets mb-6 flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3 sm:px-5">
@@ -463,8 +496,16 @@ export default function HuntShell() {
 
         <button
           type="button"
+          onClick={() => setShowRulesModal(true)}
+          className="ml-auto text-[10px] tracked text-scale hover:text-ember transition-colors flex items-center gap-1.5 border border-ember/25 bg-ember/5 px-2.5 py-1 rounded"
+        >
+          <span aria-hidden>📜</span> Rules
+        </button>
+
+        <button
+          type="button"
           onClick={() => setConfirm("signout")}
-          className="ml-auto text-[10px] tracked text-ink-dim underline-offset-4 transition-colors hover:text-danger hover:underline"
+          className="text-[10px] tracked text-ink-dim underline-offset-4 transition-colors hover:text-danger hover:underline"
         >
           Sign out
         </button>

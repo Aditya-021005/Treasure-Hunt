@@ -38,6 +38,10 @@ const BOOT = [
 ];
 
 const RULES: [string, string][] = [
+  [
+    "Tab-switch lockouts (Strict)",
+    "If you switch tabs, minimize the browser, or divert focus 5 times during the hunt, your workstation is locked out by the Elder Drake. You will require a proctor override key to restore access.",
+  ],
   ["Sign in with BITS Google", "One account per person. Your captain creates the team; everyone else joins with the code."],
   ["Teams share one run", "Any member can play from their own device. Progress is the team's, not yours."],
   ["Answers chain", "Every answer feeds the next lock. Write them down — you will need them again."],
