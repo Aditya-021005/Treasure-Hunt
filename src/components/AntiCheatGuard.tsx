@@ -332,7 +332,7 @@ export default function AntiCheatGuard({
                 disabled={unlocking || unlockSuccess}
                 autoFocus
                 autoComplete="off"
-                placeholder="e.g. BEP-DRAKE-2026"
+                placeholder="PROCTOR KEY"
                 className="w-full rounded border-2 border-danger/60 bg-void/90 px-4 py-2.5 font-mono text-center text-sm font-bold tracking-widest text-ink transition-all focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/40 placeholder:text-ink-dim/40 uppercase"
               />
             </div>

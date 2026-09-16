@@ -18,8 +18,10 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Please enter an override code." }, { status: 400 });
   }
 
-  const envCode = process.env.HUNT_UNLOCK_CODE?.trim();
-  if (!envCode) {
+  const envUnlock = process.env.HUNT_UNLOCK_CODE?.trim();
+  const envAdmin = process.env.HUNT_ADMIN_PASSWORD?.trim();
+
+  if (!envUnlock && !envAdmin) {
     return Response.json(
       { error: "Proctor unfreeze code is not configured in server environment." },
       { status: 500 },
@@ -28,9 +30,12 @@ export async function POST(req: NextRequest) {
 
   // Normalize by stripping non-alphanumeric characters (spaces, hyphens, underscores)
   const normalized = raw.replace(/[^A-Z0-9]/g, "");
-  const envTarget = envCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const targetUnlock = envUnlock?.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const targetAdmin = envAdmin?.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-  const isValid = normalized === envTarget;
+  const isValid =
+    (Boolean(targetUnlock) && normalized === targetUnlock) ||
+    (Boolean(targetAdmin) && normalized === targetAdmin);
 
   if (!isValid) {
     return Response.json(
