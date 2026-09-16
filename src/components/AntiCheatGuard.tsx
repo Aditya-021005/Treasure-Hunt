@@ -132,11 +132,30 @@ export default function AntiCheatGuard({
     };
   }, [isQuizActive, containerId]);
 
+  // Helper to cleanly lift lockdown
+  const liftLockdown = () => {
+    setUnlockSuccess(true);
+    setTimeout(() => {
+      setIsLockedDown(false);
+      setTabSwitches(0);
+      setOverrideCode("");
+      setUnlockSuccess(false);
+      try {
+        sessionStorage.removeItem("bep_locked_down");
+        localStorage.removeItem("bep_locked_down");
+        sessionStorage.setItem("bep_tab_switches", "0");
+      } catch {
+        // Ignore
+      }
+    }, 1000);
+  };
+
   // 3. Tab-Switch / Out-of-Focus Proctoring ("Dragon Eye Surveillance")
   useEffect(() => {
     if (!isQuizActive) return;
 
     let isAway = false;
+    let lastSwitchAt = 0;
 
     const handleLeave = () => {
       if (!isAway) {
@@ -147,6 +166,13 @@ export default function AntiCheatGuard({
     const handleReturn = () => {
       if (isAway) {
         isAway = false;
+        const now = Date.now();
+        // Prevent rapid duplicate events (blur + visibilitychange firing simultaneously)
+        if (now - lastSwitchAt < 1500) {
+          return;
+        }
+        lastSwitchAt = now;
+
         setTabSwitches((prev) => {
           const next = prev + 1;
           try {
@@ -224,7 +250,7 @@ export default function AntiCheatGuard({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ code: overrideCode }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         setUnlockError(data.error || "Invalid proctor override key.");
@@ -233,20 +259,7 @@ export default function AntiCheatGuard({
         return;
       }
 
-      setUnlockSuccess(true);
-      setTimeout(() => {
-        setIsLockedDown(false);
-        setTabSwitches(0);
-        setOverrideCode("");
-        setUnlockSuccess(false);
-        try {
-          sessionStorage.removeItem("bep_locked_down");
-          localStorage.removeItem("bep_locked_down");
-          sessionStorage.setItem("bep_tab_switches", "0");
-        } catch {
-          // Ignore
-        }
-      }, 1100);
+      liftLockdown();
     } catch {
       setUnlockError("Failed to reach server. Please check your connection.");
     } finally {
@@ -373,6 +386,26 @@ export default function AntiCheatGuard({
                 </p>
               </div>
             )}
+
+            <div className="mt-4 pt-3 border-t border-ember/15">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    sessionStorage.removeItem("bep_locked_down");
+                    localStorage.removeItem("bep_locked_down");
+                    sessionStorage.setItem("bep_tab_switches", "0");
+                    await fetch("/api/auth/signout", { method: "POST" });
+                  } catch {
+                    // Ignore
+                  }
+                  window.location.href = "/";
+                }}
+                className="font-mono text-[10px] text-ink-dim/70 hover:text-danger underline underline-offset-2 transition-colors"
+              >
+                Exit Hunt / Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </div>

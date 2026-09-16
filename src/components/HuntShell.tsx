@@ -308,6 +308,11 @@ export default function HuntShell() {
   const signOut = useCallback(async () => {
     setSigningOut(true);
     try {
+      try {
+        sessionStorage.removeItem("bep_locked_down");
+        localStorage.removeItem("bep_locked_down");
+        sessionStorage.setItem("bep_tab_switches", "0");
+      } catch {}
       await fetch("/api/auth/signout", { method: "POST" });
       router.replace("/");
     } finally {
@@ -346,7 +351,6 @@ export default function HuntShell() {
   if (gateStatus) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 py-12 text-center">
-        <AntiCheatGuard enabled={true} />
         <section className="panel notch brackets pop-3d w-full p-8 text-center sm:p-12">
           <DragonEye variant="lockdown" className="mx-auto mb-4 h-16 w-24" />
           <p className="font-mono text-[10px] font-bold tracking-[0.25em] text-danger uppercase">
@@ -359,7 +363,17 @@ export default function HuntShell() {
             {gateStatus.error}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/" className="btn notch">
+            <Link
+              href="/"
+              onClick={() => {
+                try {
+                  sessionStorage.removeItem("bep_locked_down");
+                  localStorage.removeItem("bep_locked_down");
+                  sessionStorage.setItem("bep_tab_switches", "0");
+                } catch {}
+              }}
+              className="btn notch"
+            >
               Return to Surface
             </Link>
             <button

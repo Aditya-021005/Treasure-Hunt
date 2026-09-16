@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Normalize by stripping spaces, hyphens, underscores
-  const normalized = raw.replace(/[\s\-_]/g, "");
-  const envTarget = envCode.toUpperCase().replace(/[\s\-_]/g, "");
+  // Normalize by stripping non-alphanumeric characters (spaces, hyphens, underscores)
+  const normalized = raw.replace(/[^A-Z0-9]/g, "");
+  const envTarget = envCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
   const isValid = normalized === envTarget;
 
