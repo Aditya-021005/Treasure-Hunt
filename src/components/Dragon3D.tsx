@@ -152,6 +152,7 @@ export default function Dragon3D({ className = "", compact = false }: Dragon3DPr
     renderer.toneMappingExposure = 1.35;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.domElement.style.touchAction = "pan-y";
     container.appendChild(renderer.domElement);
 
     // 3. Atmospheric Lighting
@@ -614,7 +615,7 @@ export default function Dragon3D({ className = "", compact = false }: Dragon3DPr
   return (
     <div
       ref={wrapperRef}
-      className={`relative overflow-hidden rounded-lg border border-ember/25 bg-gradient-to-b from-panel-2/95 via-panel/95 to-void shadow-[0_0_60px_rgba(230,57,70,0.2)] backdrop-blur-md transition-all duration-300 ${
+      className={`relative overflow-hidden rounded-lg border border-ember/25 bg-gradient-to-b from-panel-2/95 via-panel/95 to-void shadow-[0_0_60px_rgba(230,57,70,0.2)] backdrop-blur-md transition-all duration-300 touch-pan-y ${
         isFullscreen
           ? "!fixed !inset-0 !z-[9999] !h-screen !w-screen !rounded-none !border-none"
           : compact
@@ -625,12 +626,12 @@ export default function Dragon3D({ className = "", compact = false }: Dragon3DPr
       {/* 3D WebGL Canvas Viewport */}
       <div
         ref={containerRef}
-        className="relative h-full w-full cursor-crosshair touch-none"
+        className="relative h-full w-full cursor-crosshair pointer-events-none sm:pointer-events-auto touch-pan-y"
       />
 
       {/* Loading Overlay */}
       {loadProgress !== null && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-void/90 backdrop-blur-md p-6">
+        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center bg-void/90 backdrop-blur-md p-6">
           <DragonLoader
             progress={loadProgress}
             size={compact ? "sm" : "md"}
