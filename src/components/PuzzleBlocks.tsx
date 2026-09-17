@@ -184,13 +184,31 @@ export function Block({ block }: { block: PuzzleBlock }) {
         </figure>
       );
 
-    case "callout":
+    case "callout": {
+      const hexMatches = block.text.match(/#[0-9A-Fa-f]{6}/g);
       return (
         <aside className="panel-flush notch border-l-2 border-l-scale px-4 py-3.5 select-none sm:px-5">
           <p className="text-[10px] tracked text-scale/70">Field note</p>
           <p className="mt-1.5 text-[14px] text-scale glow-scale italic">{block.text}</p>
+          {hexMatches && hexMatches.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 pt-2.5 border-t border-scale/15">
+              {hexMatches.map((hex, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2 rounded bg-black/40 px-3 py-1.5 border border-scale/20 font-mono text-xs text-ink/90 shadow-sm"
+                >
+                  <span
+                    className="h-4 w-4 rounded-sm border border-white/20 shadow"
+                    style={{ backgroundColor: hex }}
+                  />
+                  <span>{hex}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </aside>
       );
+    }
 
     case "fadeEssay":
       return <FadeEssay text={block.text} note={block.note} />;

@@ -33,7 +33,7 @@ export default function DragonLoader({
       : pct < 25
         ? "Igniting abyssal forge & runes..."
         : pct < 55
-          ? "Forging obsidian scales & 9.5MB mesh..."
+          ? "Forging volcanic scales & 9.5MB mesh..."
           : pct < 85
             ? "Infusing primordial draconic flame..."
             : "Elder Drake Fatalis breaking free...");

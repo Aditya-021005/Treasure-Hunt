@@ -5,7 +5,7 @@ import DragonEye from "@/components/DragonEye";
 
 const STEPS: [number, string][] = [
   [0, "awakening the dragon sanctum"],
-  [15, "breaking obsidian seals"],
+  [15, "breaking volcanic seals"],
   [34, "stoking subterranean embers"],
   [52, "cipher table · 5 draconic locks"],
   [70, "unsealing the plate archives"],
