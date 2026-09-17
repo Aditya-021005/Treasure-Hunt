@@ -78,7 +78,13 @@ export async function getMe(
     const team = user.teamId ? db.teams[user.teamId] : undefined;
     return {
       ...base,
-      user: { name: user.name, email: user.email, picture: user.picture },
+      user: {
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        isLockedDown: Boolean(user.isLockedDown),
+        tabSwitches: user.tabSwitches ?? 0,
+      },
       team: team ? toTeamSummary(db, team, db.users, userId) : null,
       isAdmin: isAdminEmail(user.email),
     };

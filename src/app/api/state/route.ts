@@ -22,7 +22,12 @@ export async function GET() {
     const denied = guard(user, team, now, preview);
     if (denied) return { denied };
 
-    ensureStarted(team!, now);
+    ensureStarted(
+      team!,
+      now,
+      Boolean(db.round2Unlocked),
+      Boolean(db.round1Closed || db.activeRound === 2),
+    );
     return {
       state: toState(db, team!, db.users, userId, now, db.eventOverride ?? null),
       level: toPublicLevel(db, team!, team!.level),

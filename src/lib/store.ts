@@ -29,6 +29,10 @@ export type User = {
   teamId: string | null;
   createdAt: number;
   lastSeenAt: number;
+  /** Proctoring: tab switches recorded for this account. */
+  tabSwitches?: number;
+  /** Proctoring: whether this particular account is locked out. */
+  isLockedDown?: boolean;
 };
 
 export type { DB };
@@ -48,6 +52,8 @@ export type Team = {
    * request after the hunt opens, so registering early costs nothing.
    */
   startedAt: number | null;
+  /** When this team entered Round 2 (Level 6). */
+  round2StartedAt?: number | null;
   /** 1-based. Equals TOTAL_LEVELS + 1 once the hunt is finished. */
   level: number;
   finishedAt: number | null;
@@ -78,6 +84,10 @@ type DB = {
   vaultNote?: string | null;
   /** Whether Round 2 (levels 6-10) is open for teams that cleared Round 1. */
   round2Unlocked?: boolean;
+  /** Whether Round 1 is closed for the day. */
+  round1Closed?: boolean;
+  /** Active round for today (1 or 2). */
+  activeRound?: 1 | 2;
   users: Record<string, User>;
   teams: Record<string, Team>;
   /** google sub -> user id */
@@ -278,6 +288,7 @@ export function blankTeam(opts: {
     memberIds: [opts.captainId],
     createdAt: opts.now,
     startedAt: null,
+    round2StartedAt: null,
     level: 1,
     finishedAt: null,
     solvedAt: {},

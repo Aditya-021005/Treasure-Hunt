@@ -13,6 +13,12 @@ interface AntiCheatGuardProps {
   onTabSwitch?: (count: number) => void;
   /** Custom warning duration in ms (default 4500) */
   toastDuration?: number;
+  /** Account proctoring lockout from server */
+  isLockedDown?: boolean;
+  /** Account tab switches count from server */
+  tabSwitches?: number;
+  /** Callback fired when override unlock succeeds */
+  onUnlocked?: () => void;
 }
 
 // Zero-width characters and homoglyphs that confuse automated parsers/LLMs if scraped
@@ -25,6 +31,9 @@ export default function AntiCheatGuard({
   containerId,
   onTabSwitch,
   toastDuration = 4500,
+  isLockedDown: serverLockedDown = false,
+  tabSwitches: serverTabSwitches = 0,
+  onUnlocked,
 }: AntiCheatGuardProps) {
   const pathname = usePathname();
   const isQuizActive = Boolean(enabled && pathname === "/hunt");
@@ -35,28 +44,16 @@ export default function AntiCheatGuard({
     () => false,
   );
 
-  const [tabSwitches, setTabSwitches] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    try {
-      return Number(sessionStorage.getItem("bep_tab_switches") || "0");
-    } catch {
-      return 0;
-    }
-  });
+  const [tabSwitches, setTabSwitches] = useState(serverTabSwitches);
+  const [isLockedDown, setIsLockedDown] = useState(serverLockedDown);
 
-  const [isLockedDown, setIsLockedDown] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const sw = Number(sessionStorage.getItem("bep_tab_switches") || "0");
-      return (
-        sessionStorage.getItem("bep_locked_down") === "true" ||
-        localStorage.getItem("bep_locked_down") === "true" ||
-        sw >= 5
-      );
-    } catch {
-      return false;
-    }
-  });
+  useEffect(() => {
+    setIsLockedDown(serverLockedDown);
+  }, [serverLockedDown]);
+
+  useEffect(() => {
+    setTabSwitches(serverTabSwitches);
+  }, [serverTabSwitches]);
 
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
@@ -140,13 +137,7 @@ export default function AntiCheatGuard({
       setTabSwitches(0);
       setOverrideCode("");
       setUnlockSuccess(false);
-      try {
-        sessionStorage.removeItem("bep_locked_down");
-        localStorage.removeItem("bep_locked_down");
-        sessionStorage.setItem("bep_tab_switches", "0");
-      } catch {
-        // Ignore
-      }
+      onUnlocked?.();
     }, 1000);
   };
 
@@ -163,7 +154,7 @@ export default function AntiCheatGuard({
       }
     };
 
-    const handleReturn = () => {
+    const handleReturn = async () => {
       if (isAway) {
         isAway = false;
         const now = Date.now();
@@ -173,31 +164,33 @@ export default function AntiCheatGuard({
         }
         lastSwitchAt = now;
 
-        setTabSwitches((prev) => {
-          const next = prev + 1;
-          try {
-            sessionStorage.setItem("bep_tab_switches", String(next));
-          } catch {
-            // Ignore storage restrictions
-          }
+        try {
+          const res = await fetch("/api/proctor/tab-switch", { method: "POST" });
+          const data = (await res.json().catch(() => ({}))) as {
+            tabSwitches?: number;
+            isLockedDown?: boolean;
+          };
+
+          const next = data.tabSwitches ?? tabSwitches + 1;
+          setTabSwitches(next);
           if (onTabSwitch) onTabSwitch(next);
 
-          if (next >= 5) {
+          if (data.isLockedDown || next >= 5) {
             setIsLockedDown(true);
-            try {
-              sessionStorage.setItem("bep_locked_down", "true");
-              localStorage.setItem("bep_locked_down", "true");
-            } catch {
-              // Ignore storage restrictions
-            }
           } else {
             setWarningMessage(
               `⚠️ GAZE DIVERTED: The Elder Drake noticed your attention wander into other realms. [Switches: ${next}/5]`
             );
             setShowWarning(true);
           }
-          return next;
-        });
+        } catch {
+          // Fallback if network drops
+          setTabSwitches((prev) => {
+            const next = prev + 1;
+            if (next >= 5) setIsLockedDown(true);
+            return next;
+          });
+        }
       }
     };
 
@@ -205,7 +198,7 @@ export default function AntiCheatGuard({
       if (document.hidden) {
         handleLeave();
       } else {
-        handleReturn();
+        void handleReturn();
       }
     };
 
@@ -214,7 +207,7 @@ export default function AntiCheatGuard({
     };
 
     const handleWindowFocus = () => {
-      handleReturn();
+      void handleReturn();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -226,7 +219,7 @@ export default function AntiCheatGuard({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [isQuizActive, onTabSwitch]);
+  }, [isQuizActive, onTabSwitch, tabSwitches]);
 
   // Auto-hide warning toast
   useEffect(() => {
@@ -392,9 +385,6 @@ export default function AntiCheatGuard({
                 type="button"
                 onClick={async () => {
                   try {
-                    sessionStorage.removeItem("bep_locked_down");
-                    localStorage.removeItem("bep_locked_down");
-                    sessionStorage.setItem("bep_tab_switches", "0");
                     await fetch("/api/auth/signout", { method: "POST" });
                   } catch {
                     // Ignore

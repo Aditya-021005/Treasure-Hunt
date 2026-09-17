@@ -86,7 +86,13 @@ export type EventInfo = {
 };
 
 export type Me = {
-  user: { name: string; email: string; picture: string | null } | null;
+  user: {
+    name: string;
+    email: string;
+    picture: string | null;
+    isLockedDown?: boolean;
+    tabSwitches?: number;
+  } | null;
   team: TeamSummary | null;
   event: EventInfo;
   maxTeamSize: number;
@@ -117,10 +123,17 @@ export type TeamState = {
   finished: boolean;
   round1Cleared: boolean;
   round2Unlocked: boolean;
+  round1Closed?: boolean;
+  activeRound?: 1 | 2;
+  isLockedDown: boolean;
+  tabSwitches: number;
   startedAt: number;
+  round2StartedAt?: number | null;
   finishedAt: number | null;
   penaltyMs: number;
   elapsedMs: number;
+  round1Ms: number;
+  round2Ms: number;
   rail: RailEntry[];
   /** Epoch ms until which answering is rate-limited, if any. */
   lockedUntil: number | null;
@@ -153,7 +166,14 @@ export type LeaderboardRow = {
 
 /* --------------------------------- admin -------------------------- */
 
-export type AdminMember = { name: string; email: string; isCaptain: boolean };
+export type AdminMember = {
+  id: string;
+  name: string;
+  email: string;
+  isCaptain: boolean;
+  isLockedDown?: boolean;
+  tabSwitches?: number;
+};
 
 export type AdminTeamRow = {
   id: string;
@@ -161,10 +181,13 @@ export type AdminTeamRow = {
   code: string;
   createdAt: number;
   startedAt: number | null;
+  round2StartedAt?: number | null;
   finishedAt: number | null;
   solved: number;
   totalLevels: number;
   timeMs: number;
+  round1Ms?: number;
+  round2Ms?: number;
   penaltyMs: number;
   hintsUsed: number;
   attempts: number;
@@ -187,6 +210,8 @@ export type AdminOverview = {
   /** Shown on the vault page once a team finishes. */
   vaultNote: string;
   round2Unlocked: boolean;
+  round1Closed?: boolean;
+  activeRound?: 1 | 2;
 };
 
 export type ApiError = { error: string; lockedUntil?: number; opensAt?: number };

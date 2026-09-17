@@ -38,6 +38,19 @@ export async function POST(req: NextRequest) {
     const { setRound2Unlocked } = await import("@/lib/admin");
     const unlocked = Boolean((body as { unlocked?: unknown }).unlocked);
     await setRound2Unlocked(unlocked);
+  } else if (action === "round1-closed") {
+    const { setRound1Closed } = await import("@/lib/admin");
+    const closed = Boolean((body as { closed?: unknown }).closed);
+    await setRound1Closed(closed);
+  } else if (action === "advance-round2") {
+    const { advanceAllTeamsToRound2 } = await import("@/lib/admin");
+    const r = await advanceAllTeamsToRound2();
+    return Response.json({ ok: true, ...r });
+  } else if (action === "unlock-user") {
+    const { unlockUserAccount } = await import("@/lib/admin");
+    const targetUserId = String((body as { userId?: unknown }).userId ?? "");
+    if (!targetUserId) return Response.json({ error: "No userId provided." }, { status: 400 });
+    await unlockUserAccount(targetUserId);
   } else if (action === "lock") {
     const opensAt = parseWhen(body.opensAt);
     if (opensAt === null)

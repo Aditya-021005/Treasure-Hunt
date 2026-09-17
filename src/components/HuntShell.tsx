@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Blocks } from "@/components/PuzzleBlocks";
 import PlateGrid from "@/components/PlateGrid";
 import Notepad from "@/components/Notepad";
@@ -186,11 +186,21 @@ export default function HuntShell() {
     ? Math.max(0, state.hintBudget - state.hintsTaken)
     : 0;
 
-  const elapsed = state
-    ? state.finished
-      ? state.elapsedMs
-      : Math.max(0, now - state.startedAt) + state.penaltyMs
-    : 0;
+  const elapsed = useMemo(() => {
+    if (!state) return 0;
+    if (state.finished) return state.elapsedMs;
+
+    const r1 = state.round1Cleared
+      ? state.round1Ms
+      : Math.max(0, now - state.startedAt);
+
+    const r2 =
+      state.level >= 6 && state.round2StartedAt
+        ? Math.max(0, now - state.round2StartedAt)
+        : 0;
+
+    return r1 + r2 + state.penaltyMs;
+  }, [state, now]);
 
   /* ---------------------------- actions --------------------------- */
 
@@ -202,15 +212,10 @@ export default function HuntShell() {
       pausePollRef.current = true;
       setFeedback(null);
       try {
-        const tabSwitches = Number(
-          (typeof window !== "undefined" &&
-            sessionStorage.getItem("bep_tab_switches")) ||
-            "0",
-        );
         const res = await fetch("/api/answer", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ level: level.id, answer, tabSwitches }),
+          body: JSON.stringify({ level: level.id, answer }),
         });
         const data = await res.json();
 
@@ -319,9 +324,6 @@ export default function HuntShell() {
     setSigningOut(true);
     try {
       try {
-        sessionStorage.removeItem("bep_locked_down");
-        localStorage.removeItem("bep_locked_down");
-        sessionStorage.setItem("bep_tab_switches", "0");
         sessionStorage.removeItem("bep_rules_accepted");
       } catch {}
       await fetch("/api/auth/signout", { method: "POST" });
@@ -376,13 +378,6 @@ export default function HuntShell() {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href="/"
-              onClick={() => {
-                try {
-                  sessionStorage.removeItem("bep_locked_down");
-                  localStorage.removeItem("bep_locked_down");
-                  sessionStorage.setItem("bep_tab_switches", "0");
-                } catch {}
-              }}
               className="btn notch"
             >
               Return to Surface
@@ -429,7 +424,12 @@ export default function HuntShell() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-      <AntiCheatGuard enabled={Boolean(!loading && state && level && !state.finished && rulesAccepted)} />
+      <AntiCheatGuard
+        enabled={Boolean(!loading && state && level && !state.finished && rulesAccepted)}
+        isLockedDown={state?.isLockedDown}
+        tabSwitches={state?.tabSwitches}
+        onUnlocked={() => void sync()}
+      />
 
       {showRulesModal && (
         <RulesGate
@@ -883,11 +883,13 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
         </div>
       ) : null}
 
-      <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-3">
+      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-5">
         {[
-          ["Final time", formatDuration(elapsed)],
+          ["Round 1", formatDuration(state.round1Ms)],
+          ["Round 2", formatDuration(state.round2Ms)],
+          ["Total Time", formatDuration(elapsed)],
           ["Locks", `${state.totalLevels}/${state.totalLevels}`],
-          ["Hint penalty", `${Math.round(state.penaltyMs / 60000)} min`],
+          ["Penalty", `${Math.round(state.penaltyMs / 60000)} min`],
         ].map(([k, v]) => (
           <div key={k} className="bg-panel px-3 py-4">
             <dt className="text-[9px] tracked text-ink-dim">{k}</dt>
@@ -910,7 +912,7 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
 
 function Round1CheckpointCard({
   state,
-  elapsed,
+  elapsed: _elapsed,
   onRefresh,
 }: {
   state: TeamState;
@@ -956,7 +958,7 @@ function Round1CheckpointCard({
 
       <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-3">
         {[
-          ["Round 1 Time", formatDuration(elapsed)],
+          ["Round 1 Time", formatDuration(state.round1Ms)],
           ["Locks Cleared", "5 of 5 (Round 1)"],
           ["Hint Penalty", `${Math.round(state.penaltyMs / 60000)} min`],
         ].map(([k, v]) => (

@@ -44,8 +44,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const { readSession } = await import("@/lib/session");
+  const { transact } = await import("@/lib/store");
+  const userId = await readSession();
+
+  if (userId) {
+    await transact((db) => {
+      const user = db.users[userId];
+      if (user) {
+        user.isLockedDown = false;
+        user.tabSwitches = 0;
+      }
+    });
+  }
+
   return Response.json({
     ok: true,
     message: "Authorization verified. Dragon seals lifted.",
+    isLockedDown: false,
+    tabSwitches: 0,
   });
 }

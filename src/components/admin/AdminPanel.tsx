@@ -312,18 +312,27 @@ export default function AdminPanel() {
       {/* ------------------------------- round 2 gate ---------------- */}
       <section className="panel notch brackets mb-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-[10px] tracked text-ember">Round 2 Gate (Levels 6–10)</h2>
+          <h2 className="text-[10px] tracked text-ember">Round Controls (Day 1 / Day 2)</h2>
           <span
             className={`badge ${data.round2Unlocked ? "badge-solved" : "badge-locked"}`}
           >
             {data.round2Unlocked ? "Round 2 Unlocked" : "Round 2 Locked"}
           </span>
-          <span className="text-[10px] tracked text-ink-dim">
-            {data.round2Unlocked
-              ? "Teams that cleared Round 1 can now play Levels 6 to 10."
-              : "Teams that clear Level 5 wait at the Round 1 Cleared checkpoint."}
+          <span
+            className={`badge ${data.round1Closed ? "badge-locked" : "badge-solved"}`}
+          >
+            {data.round1Closed ? "Round 1 Closed (Today)" : "Round 1 Open"}
           </span>
         </div>
+
+        <p className="mt-2 max-w-prose text-[12px] leading-relaxed text-ink-dim">
+          {data.round1Closed
+            ? "Round 1 is closed. Submissions for Levels 1–5 are blocked. All teams playing today play Round 2."
+            : "Round 1 is open for submissions."}{" "}
+          {data.round2Unlocked
+            ? "Round 2 is active — teams on Level 6+ can solve puzzles."
+            : "Round 2 is locked — teams that clear Level 5 wait at the checkpoint."}
+        </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Btn
@@ -339,6 +348,38 @@ export default function AdminPanel() {
             }
           >
             {data.round2Unlocked ? "Lock Round 2" : "Unlock Round 2 now"}
+          </Btn>
+
+          <Btn
+            type="button"
+            variant={data.round1Closed ? "ghost" : "solid"}
+            loading={busy}
+            onClick={() =>
+              post(
+                "/api/admin/event",
+                { action: "round1-closed", closed: !data.round1Closed },
+                data.round1Closed ? "Round 1 reopened." : "Round 1 closed for today.",
+              )
+            }
+          >
+            {data.round1Closed ? "Reopen Round 1" : "Close Round 1 for today"}
+          </Btn>
+
+          <Btn
+            type="button"
+            variant="ghost"
+            loading={busy}
+            onClick={() => {
+              if (confirm("Advance all teams currently on Levels 1–5 to Level 6 (Round 2)?")) {
+                post(
+                  "/api/admin/event",
+                  { action: "advance-round2" },
+                  "All teams advanced to Round 2!",
+                );
+              }
+            }}
+          >
+            Advance all teams to Round 2
           </Btn>
         </div>
       </section>
@@ -441,18 +482,45 @@ export default function AdminPanel() {
                     {t.finishedAt ? " · cleared" : ""}
                   </span>
                   <span className="tabular-nums">
-                    {t.startedAt ? formatDuration(t.timeMs) : "—"}
+                    Total: {t.timeMs ? formatDuration(t.timeMs) : "—"}
                   </span>
+                  {(Boolean(t.round1Ms) || Boolean(t.round2Ms)) && (
+                    <span className="tabular-nums text-ink-dim/80">
+                      R1: {t.round1Ms ? formatDuration(t.round1Ms) : "—"} · R2:{" "}
+                      {t.round2Ms ? formatDuration(t.round2Ms) : "—"}
+                    </span>
+                  )}
                   <span className="tabular-nums">{t.hintsUsed} hints</span>
                 </div>
 
                 <ul className="flex flex-col gap-0.5">
                   {t.members.map((m) => (
                     <li key={m.email} className="text-[11px] text-ink-dim">
-                      {m.name}
-                      {m.isCaptain && <span className="text-scale"> ·c</span>}
+                      <span className="flex items-center gap-1.5">
+                        <span>{m.name}</span>
+                        {m.isCaptain && <span className="text-scale"> ·c</span>}
+                        {m.isLockedDown && (
+                          <span className="flex items-center gap-1 text-[9px] font-bold text-danger">
+                            <span>[LOCKED]</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                post(
+                                  "/api/admin/event",
+                                  { action: "unlock-user", userId: m.id },
+                                  `Unlocked ${m.name}`,
+                                )
+                              }
+                              className="underline text-scale hover:text-ember"
+                            >
+                              unfreeze
+                            </button>
+                          </span>
+                        )}
+                      </span>
                       <span className="block text-[9px] break-all opacity-60">
                         {m.email}
+                        {m.tabSwitches ? ` · ${m.tabSwitches} switches` : ""}
                       </span>
                     </li>
                   ))}
@@ -507,9 +575,32 @@ export default function AdminPanel() {
                     <ul className="flex flex-col gap-0.5">
                       {t.members.map((m) => (
                         <li key={m.email} className="text-[11px] text-ink-dim">
-                          {m.name}
-                          {m.isCaptain && <span className="text-scale"> ·c</span>}
-                          <span className="block text-[9px] opacity-60">{m.email}</span>
+                          <span className="flex items-center gap-1.5">
+                            <span>{m.name}</span>
+                            {m.isCaptain && <span className="text-scale"> ·c</span>}
+                            {m.isLockedDown && (
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-danger">
+                                <span>[LOCKED]</span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    post(
+                                      "/api/admin/event",
+                                      { action: "unlock-user", userId: m.id },
+                                      `Unlocked ${m.name}`,
+                                    )
+                                  }
+                                  className="underline text-scale hover:text-ember"
+                                >
+                                  unfreeze
+                                </button>
+                              </span>
+                            )}
+                          </span>
+                          <span className="block text-[9px] opacity-60">
+                            {m.email}
+                            {m.tabSwitches ? ` · ${m.tabSwitches} switches` : ""}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -518,7 +609,13 @@ export default function AdminPanel() {
                     {pad2(t.solved)}/{pad2(t.totalLevels)}
                   </td>
                   <td className="px-4 py-3 text-[13px] tabular-nums text-ink-dim">
-                    {t.startedAt ? formatDuration(t.timeMs) : "—"}
+                    <div>{t.timeMs ? formatDuration(t.timeMs) : "—"}</div>
+                    {(Boolean(t.round1Ms) || Boolean(t.round2Ms)) && (
+                      <div className="text-[10px] text-ink-dim/75">
+                        R1: {t.round1Ms ? formatDuration(t.round1Ms) : "—"} · R2:{" "}
+                        {t.round2Ms ? formatDuration(t.round2Ms) : "—"}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-[13px] tabular-nums text-ink-dim">
                     {t.hintsUsed}

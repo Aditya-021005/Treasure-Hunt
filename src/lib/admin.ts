@@ -2,6 +2,7 @@ import { publicWindow } from "@/lib/event";
 import { totalLevels } from "@/lib/levels";
 import { formatCode, read, transact } from "@/lib/store";
 import { hasAdminSession } from "@/lib/admin-auth";
+import { rankedMs, roundTimes } from "@/lib/hunt";
 import type { AdminOverview, AdminTeamRow } from "@/lib/types";
 
 /**
@@ -55,6 +56,25 @@ export async function requireAdmin(
   return null;
 }
 
+/**
+ * Gate for route handlers under /api/admin/*. Checks the Google session
+ * first (email on allow-list), then falls back to the password cookie.
+ */
+export async function assertAdmin(): Promise<void> {
+  const byPassword = await hasAdminSession();
+  if (byPassword) return;
+
+  const { readSession } = await import("@/lib/session");
+  const userId = await readSession();
+  if (!userId) {
+    throw new Error("Admin authentication required.");
+  }
+  const email = await read((db) => db.users[userId]?.email);
+  if (!isAdminEmail(email)) {
+    throw new Error("Forbidden — your account is not on the admin allow-list.");
+  }
+}
+
 /* ------------------------------- overview ------------------------- */
 
 export async function overview(): Promise<AdminOverview> {
@@ -63,21 +83,24 @@ export async function overview(): Promise<AdminOverview> {
   return read((db) => {
     const total = totalLevels(db);
     const teams: AdminTeamRow[] = Object.values(db.teams).map((t) => {
-      const solved = Math.min(t.level - 1, total);
-      const solveTimes = Object.values(t.solvedAt);
-      const lastSolve = solveTimes.length ? Math.max(...solveTimes) : null;
-      const start = t.startedAt ?? t.createdAt;
-      const end = t.finishedAt ?? lastSolve ?? start;
+      const solved = Object.values(t.solvedAt).filter(
+        (ts): ts is number => typeof ts === "number",
+      ).length;
+      const { round1Elapsed, round2Elapsed } = roundTimes(t, now);
+      const isStarted = t.startedAt !== null || t.round2StartedAt !== null;
       return {
         id: t.id,
         name: t.name,
         code: formatCode(t.code),
         createdAt: t.createdAt,
         startedAt: t.startedAt,
+        round2StartedAt: t.round2StartedAt,
         finishedAt: t.finishedAt,
         solved,
         totalLevels: total,
-        timeMs: t.startedAt === null ? 0 : Math.max(0, end - start) + t.penaltyMs,
+        timeMs: isStarted ? rankedMs(t) : 0,
+        round1Ms: round1Elapsed,
+        round2Ms: round2Elapsed,
         penaltyMs: t.penaltyMs,
         hintsUsed: Object.values(t.hintsUsed).reduce((a, b) => a + b, 0),
         attempts: Object.values(t.attempts).reduce((a, b) => a + b, 0),
@@ -85,9 +108,12 @@ export async function overview(): Promise<AdminOverview> {
           .map((id) => db.users[id])
           .filter(Boolean)
           .map((u) => ({
+            id: u.id,
             name: u.name,
             email: u.email,
             isCaptain: u.id === t.captainId,
+            isLockedDown: Boolean(u.isLockedDown),
+            tabSwitches: u.tabSwitches ?? 0,
           })),
       };
     });
@@ -111,6 +137,8 @@ export async function overview(): Promise<AdminOverview> {
       admins: adminEmails(),
       vaultNote: db.vaultNote ?? "",
       round2Unlocked: Boolean(db.round2Unlocked),
+      round1Closed: Boolean(db.round1Closed || db.activeRound === 2),
+      activeRound: db.activeRound ?? (db.round2Unlocked ? 2 : 1),
     };
   });
 }
@@ -120,6 +148,28 @@ export async function overview(): Promise<AdminOverview> {
 export async function setRound2Unlocked(unlocked: boolean): Promise<void> {
   await transact((db) => {
     db.round2Unlocked = unlocked;
+  });
+}
+
+export async function setRound1Closed(closed: boolean): Promise<void> {
+  await transact((db) => {
+    db.round1Closed = closed;
+    if (closed) {
+      db.activeRound = 2;
+    }
+  });
+}
+
+export async function advanceAllTeamsToRound2(): Promise<{ advancedCount: number }> {
+  return transact((db) => {
+    let count = 0;
+    for (const team of Object.values(db.teams)) {
+      if (team.level < 6) {
+        team.level = 6;
+        count++;
+      }
+    }
+    return { advancedCount: count };
   });
 }
 
@@ -147,6 +197,16 @@ export async function clearEventWindow(): Promise<void> {
   });
 }
 
+export async function unlockUserAccount(userId: string): Promise<void> {
+  await transact((db) => {
+    const user = db.users[userId];
+    if (user) {
+      user.isLockedDown = false;
+      user.tabSwitches = 0;
+    }
+  });
+}
+
 export type TeamAction = "reset" | "delete";
 
 export async function actOnTeam(
@@ -160,6 +220,7 @@ export async function actOnTeam(
     if (action === "reset") {
       team.level = 1;
       team.startedAt = null;
+      team.round2StartedAt = null;
       team.finishedAt = null;
       team.solvedAt = {};
       team.hintsUsed = {};
@@ -168,6 +229,13 @@ export async function actOnTeam(
       team.penaltyMs = 0;
       team.lastAttemptAt = 0;
       team.lockedUntil = 0;
+      for (const id of team.memberIds) {
+        const u = db.users[id];
+        if (u) {
+          u.isLockedDown = false;
+          u.tabSwitches = 0;
+        }
+      }
       return { ok: true };
     }
 

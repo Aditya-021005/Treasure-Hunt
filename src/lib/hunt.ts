@@ -48,24 +48,86 @@ export function hintsTaken(team: Team): number {
 }
 
 /**
- * The clock a team is actually RANKED on. Finished teams are timed to the
- * finish; teams still playing are timed to their most recent solve, so
- * sitting and thinking costs nothing. This is deliberately not the same as
- * `elapsedMs`, which is the wall clock — the HUD shows both, because a
- * team seeing only a running timer assumes it is being charged for it.
+ * Calculates active time for each individual round:
+ * - Round 1: from startedAt to Level 5 solve (or to now/last solve if still on R1).
+ * - Round 2: from round2StartedAt to Level 10 solve (or to now/last solve if still on R2).
+ * Inter-round waiting time while held at the Round 1 Cleared checkpoint is strictly excluded!
  */
+export function roundTimes(team: Team, now: number): {
+  round1Elapsed: number;
+  round1Ranked: number;
+  round2Elapsed: number;
+  round2Ranked: number;
+} {
+  const r1Start = team.startedAt ?? team.createdAt;
+  const r1SolvedAt = team.solvedAt["5"];
+
+  const r1Solves = [1, 2, 3, 4, 5]
+    .map((lvl) => team.solvedAt[String(lvl)])
+    .filter((t): t is number => typeof t === "number");
+  const r1LastSolve = r1Solves.length ? Math.max(...r1Solves) : null;
+
+  let round1Elapsed = 0;
+  let round1Ranked = 0;
+
+  if (team.startedAt !== null) {
+    if (r1SolvedAt) {
+      // Round 1 completed: locked at Level 5 solve time
+      round1Elapsed = Math.max(0, r1SolvedAt - r1Start);
+      round1Ranked = round1Elapsed;
+    } else if (team.level >= 6) {
+      // Team advanced to Round 2 without completing Round 1
+      if (r1LastSolve) {
+        round1Elapsed = Math.max(0, r1LastSolve - r1Start);
+        round1Ranked = round1Elapsed;
+      } else {
+        round1Elapsed = 0;
+        round1Ranked = 0;
+      }
+    } else {
+      // Round 1 in progress
+      round1Elapsed = Math.max(0, (team.finishedAt ?? now) - r1Start);
+      round1Ranked = Math.max(0, (team.finishedAt ?? r1LastSolve ?? r1Start) - r1Start);
+    }
+  }
+
+  let round2Elapsed = 0;
+  let round2Ranked = 0;
+
+  if (team.level >= 6) {
+    const r2Solves = [6, 7, 8, 9, 10]
+      .map((lvl) => team.solvedAt[String(lvl)])
+      .filter((t): t is number => typeof t === "number");
+    const r2LastSolve = r2Solves.length ? Math.max(...r2Solves) : null;
+    const r2SolvedAt = team.solvedAt["10"] ?? (team.level > 10 ? team.finishedAt : null);
+
+    // If round2StartedAt is set, or if they have solves in Round 2
+    const r2Start = team.round2StartedAt ?? (r2Solves.length > 0 ? r2Solves[0] : null);
+
+    if (r2Start !== null && r2Start !== undefined) {
+      if (r2SolvedAt) {
+        // Round 2 completed: locked at Level 10 solve time
+        round2Elapsed = Math.max(0, r2SolvedAt - r2Start);
+        round2Ranked = round2Elapsed;
+      } else {
+        // Round 2 in progress
+        round2Elapsed = Math.max(0, now - r2Start);
+        round2Ranked = Math.max(0, (r2LastSolve ?? r2Start) - r2Start);
+      }
+    }
+  }
+
+  return { round1Elapsed, round1Ranked, round2Elapsed, round2Ranked };
+}
+
 export function rankedMs(team: Team): number {
-  const solveTimes = Object.values(team.solvedAt);
-  const lastSolve = solveTimes.length ? Math.max(...solveTimes) : null;
-  const start = team.startedAt ?? team.createdAt;
-  const end = team.finishedAt ?? lastSolve ?? start;
-  return Math.max(0, end - start) + team.penaltyMs;
+  const { round1Ranked, round2Ranked } = roundTimes(team, Date.now());
+  return round1Ranked + round2Ranked + team.penaltyMs;
 }
 
 export function elapsedMs(team: Team, now: number): number {
-  if (team.startedAt === null) return team.penaltyMs;
-  const end = team.finishedAt ?? now;
-  return Math.max(0, end - team.startedAt) + team.penaltyMs;
+  const { round1Elapsed, round2Elapsed } = roundTimes(team, now);
+  return round1Elapsed + round2Elapsed + team.penaltyMs;
 }
 
 function rail(db: DB, team: Team): RailEntry[] {
@@ -74,7 +136,11 @@ function rail(db: DB, team: Team): RailEntry[] {
     round: l.round ?? (l.id <= 5 ? 1 : 2),
     codename: l.codename,
     status:
-      l.id < team.level ? "solved" : l.id === team.level ? "active" : "locked",
+      team.solvedAt[String(l.id)]
+        ? "solved"
+        : l.id === team.level
+        ? "active"
+        : "locked",
   }));
 }
 
@@ -100,12 +166,15 @@ export function toTeamSummary(
   users: Record<string, User>,
   viewerId: string,
 ): TeamSummary {
+  const solvedCount = Object.values(team.solvedAt).filter(
+    (t): t is number => typeof t === "number",
+  ).length;
   return {
     name: team.name,
     code: formatCode(team.code),
     isCaptain: team.captainId === viewerId,
     members: membersOf(team, users, viewerId),
-    solved: Math.min(team.level - 1, totalLevels(db)),
+    solved: Math.min(solvedCount, totalLevels(db)),
     totalLevels: totalLevels(db),
     finished: team.level > totalLevels(db),
   };
@@ -120,8 +189,12 @@ export function toState(
   override: EventOverride = null,
 ): TeamState {
   const round2Unlocked = Boolean(db.round2Unlocked);
+  const round1Closed = Boolean(db.round1Closed || db.activeRound === 2);
   const round1Cleared = team.level > 5;
   const round = team.level <= 5 ? 1 : 2;
+  const viewer = users[viewerId];
+  const isLockedDown = Boolean(viewer?.isLockedDown);
+  const tabSwitches = viewer?.tabSwitches ?? 0;
 
   return {
     team: {
@@ -136,10 +209,17 @@ export function toState(
     finished: team.level > totalLevels(db),
     round1Cleared,
     round2Unlocked,
+    round1Closed,
+    activeRound: db.activeRound ?? (round2Unlocked ? 2 : 1),
+    isLockedDown,
+    tabSwitches,
     startedAt: team.startedAt ?? now,
+    round2StartedAt: team.round2StartedAt,
     finishedAt: team.finishedAt,
     penaltyMs: team.penaltyMs,
     elapsedMs: elapsedMs(team, now),
+    round1Ms: roundTimes(team, now).round1Elapsed,
+    round2Ms: roundTimes(team, now).round2Elapsed,
     rail: rail(db, team),
     lockedUntil: team.lockedUntil > now ? team.lockedUntil : null,
     hintBudget: HINT_BUDGET,
@@ -151,7 +231,7 @@ export function toState(
     // stuck on bookkeeping rather than on the puzzle. These are answers
     // they have already earned; nothing unsolved is included.
     keys: levelsOf(db)
-      .filter((l) => l.id < team.level)
+      .filter((l) => Boolean(team.solvedAt[String(l.id)]))
       .map((l) => ({
         id: l.id,
         codename: l.codename,
@@ -252,8 +332,23 @@ export async function huntOpenNow(): Promise<boolean> {
 }
 
 /** Starts a team's clock the first time they reach the hunt after it opens. */
-export function ensureStarted(team: Team, now: number): void {
+export function ensureStarted(
+  team: Team,
+  now: number,
+  round2Unlocked = false,
+  round1Closed = false,
+): void {
   if (team.startedAt === null) team.startedAt = now;
+  if (round1Closed && team.level < 6) {
+    team.level = 6;
+  }
+  if (
+    team.level >= 6 &&
+    round2Unlocked &&
+    (team.round2StartedAt === null || team.round2StartedAt === undefined)
+  ) {
+    team.round2StartedAt = now;
+  }
 }
 
 /* -------------------------------- actions ------------------------- */
@@ -298,6 +393,21 @@ export async function submitAnswer(
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
+    if (user?.isLockedDown) {
+      return {
+        ok: false as const,
+        error: "Your account is locked down due to proctoring violations. Enter the override code to unlock.",
+        status: 403,
+      };
+    }
+    const round1Closed = Boolean(db.round1Closed || db.activeRound === 2);
+    if (levelId <= 5 && round1Closed) {
+      return {
+        ok: false as const,
+        error: "Round 1 has concluded for today. Round 2 is now active.",
+        status: 403,
+      };
+    }
     if (t.level > totalLevels(db))
       return { ok: false as const, error: "The hunt is already complete.", status: 400 };
     if (t.level >= 6 && !db.round2Unlocked && !preview)
@@ -318,7 +428,7 @@ export async function submitAnswer(
     if (now - t.lastAttemptAt < MIN_GAP_MS)
       return { ok: false as const, error: "Slow down.", status: 429 };
 
-    ensureStarted(t, now);
+    ensureStarted(t, now, Boolean(db.round2Unlocked), round1Closed);
     const level = levelFrom(db, levelId)!;
     t.lastAttemptAt = now;
 
@@ -333,6 +443,9 @@ export async function submitAnswer(
     if (matchesAnswer(guess, level.answers)) {
       t.solvedAt[String(levelId)] = now;
       t.level = levelId + 1;
+      if (levelId === 5 && db.round2Unlocked) {
+        t.round2StartedAt = now;
+      }
       if (t.level > totalLevels(db)) t.finishedAt = now;
       return {
         ok: true as const,
@@ -386,6 +499,9 @@ export async function checkGate(
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
+    if (user?.isLockedDown) {
+      return { ok: false as const, error: "Your account is locked down. Enter the override code.", status: 403 };
+    }
     if (levelId !== t.level)
       return { ok: false as const, error: "That level is not open to you.", status: 403 };
 
@@ -445,6 +561,9 @@ export async function unlockHint(
     if (denied) return { ok: false as const, ...denied };
 
     const t = team!;
+    if (user?.isLockedDown) {
+      return { ok: false as const, error: "Your account is locked down. Enter the override code.", status: 403 };
+    }
     if (levelId !== t.level)
       return { ok: false as const, error: "That level is not open to you.", status: 403 };
 
@@ -489,7 +608,9 @@ export async function leaderboard(
   const rows = await read((db) =>
     Object.values(db.teams).map((t) => {
       const total = totalLevels(db);
-      const solved = Math.min(t.level - 1, total);
+      const solved = Object.values(t.solvedAt).filter(
+        (ts): ts is number => typeof ts === "number",
+      ).length;
       const start = t.startedAt ?? t.createdAt;
       return {
         id: t.id,

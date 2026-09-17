@@ -44,16 +44,6 @@ export default function AccountPanel({ me, onChanged }: Props) {
   const [confirmOut, setConfirmOut] = useState(false);
   const [working, setWorking] = useState(false);
 
-  const clearClientLockdown = useCallback(() => {
-    try {
-      sessionStorage.removeItem("bep_locked_down");
-      localStorage.removeItem("bep_locked_down");
-      sessionStorage.setItem("bep_tab_switches", "0");
-    } catch {
-      // Ignore
-    }
-  }, []);
-
   const post = useCallback(
     async (url: string, body?: unknown) => {
       setBusy(true);
@@ -69,7 +59,6 @@ export default function AccountPanel({ me, onChanged }: Props) {
           setError(data.error ?? "That did not work.");
           return false;
         }
-        clearClientLockdown();
         onChanged();
         return true;
       } catch {
@@ -79,7 +68,7 @@ export default function AccountPanel({ me, onChanged }: Props) {
         setBusy(false);
       }
     },
-    [clearClientLockdown, onChanged],
+    [onChanged],
   );
 
   // A preview pass opens the dig without opening the event.
@@ -232,7 +221,6 @@ export default function AccountPanel({ me, onChanged }: Props) {
           onCancel={() => setConfirmOut(false)}
           onConfirm={async () => {
             setWorking(true);
-            clearClientLockdown();
             await fetch("/api/auth/signout", { method: "POST" });
             setWorking(false);
             setConfirmOut(false);
@@ -350,7 +338,6 @@ export default function AccountPanel({ me, onChanged }: Props) {
         onCancel={() => setConfirmOut(false)}
         onConfirm={async () => {
           setWorking(true);
-          clearClientLockdown();
           await fetch("/api/auth/signout", { method: "POST" });
           setWorking(false);
           setConfirmOut(false);
@@ -477,11 +464,6 @@ function MockSignIn({ onDone }: { onDone: () => void }) {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ email }),
         });
-        try {
-          sessionStorage.removeItem("bep_locked_down");
-          localStorage.removeItem("bep_locked_down");
-          sessionStorage.setItem("bep_tab_switches", "0");
-        } catch {}
         setBusy(false);
         onDone();
       }}
