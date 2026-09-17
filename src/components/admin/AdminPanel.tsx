@@ -309,6 +309,40 @@ export default function AdminPanel() {
         </div>
       </section>
 
+      {/* ------------------------------- round 2 gate ---------------- */}
+      <section className="panel notch brackets mb-6 p-4 sm:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-[10px] tracked text-ember">Round 2 Gate (Levels 6–10)</h2>
+          <span
+            className={`badge ${data.round2Unlocked ? "badge-solved" : "badge-locked"}`}
+          >
+            {data.round2Unlocked ? "Round 2 Unlocked" : "Round 2 Locked"}
+          </span>
+          <span className="text-[10px] tracked text-ink-dim">
+            {data.round2Unlocked
+              ? "Teams that cleared Round 1 can now play Levels 6 to 10."
+              : "Teams that clear Level 5 wait at the Round 1 Cleared checkpoint."}
+          </span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Btn
+            type="button"
+            variant={data.round2Unlocked ? "ghost" : "solid"}
+            loading={busy}
+            onClick={() =>
+              post(
+                "/api/admin/event",
+                { action: "round2", unlocked: !data.round2Unlocked },
+                data.round2Unlocked ? "Round 2 locked." : "Round 2 unlocked for teams!",
+              )
+            }
+          >
+            {data.round2Unlocked ? "Lock Round 2" : "Unlock Round 2 now"}
+          </Btn>
+        </div>
+      </section>
+
       {/* ------------------------------- vault ---------------------- */}
       <section className="panel notch brackets mb-6 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">

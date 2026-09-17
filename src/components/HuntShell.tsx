@@ -515,6 +515,11 @@ export default function HuntShell() {
       <ol className="mb-6 flex items-stretch gap-1.5 overflow-x-auto pb-1" aria-label="Level progress">
         {state.rail.map((r, i) => (
           <li key={r.id} className="flex flex-1 items-stretch">
+            {i === 5 && (
+              <div className="mx-1 my-auto flex h-full items-center border-l-2 border-r-2 border-scale/40 bg-scale/10 px-2 py-1 text-center font-mono text-[9px] font-bold text-scale tracking-widest whitespace-nowrap">
+                R2 ›
+              </div>
+            )}
             <div
               className={`relative flex min-w-[86px] flex-1 flex-col gap-1 border-t-2 px-2 py-2 transition-colors ${
                 r.status === "solved"
@@ -530,14 +535,15 @@ export default function HuntShell() {
                   className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-scale/12 to-transparent"
                 />
               )}
-              <span className="relative text-[9px] tracked opacity-70">
-                {pad2(r.id)} {r.status === "solved" ? "✓" : r.status === "locked" ? "✕" : "▶"}
+              <span className="relative text-[9px] tracked opacity-70 flex items-center justify-between">
+                <span>{pad2(r.id)} {r.status === "solved" ? "✓" : r.status === "locked" ? "✕" : "▶"}</span>
+                <span className="text-[8px] font-semibold text-scale/80">R{r.round ?? (r.id <= 5 ? 1 : 2)}</span>
               </span>
               <span className="relative truncate text-[11px] tracked">
                 {r.status === "locked" ? "——" : r.codename}
               </span>
             </div>
-            {i < state.rail.length - 1 && (
+            {i < state.rail.length - 1 && i !== 4 && (
               <span
                 aria-hidden
                 className={`mt-[-1px] self-start text-[9px] ${
@@ -553,11 +559,25 @@ export default function HuntShell() {
 
       {state.finished ? (
         <FinishedCard state={state} elapsed={elapsed} />
+      ) : state.level === 6 && !state.round2Unlocked ? (
+        <Round1CheckpointCard
+          state={state}
+          elapsed={elapsed}
+          onRefresh={() => void sync()}
+        />
       ) : level ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           {/* ------------------------- puzzle ----------------------- */}
           <section key={level.id} className="decrypting turn-3d">
             <header className="mb-5">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="badge badge-solved text-[9px] font-semibold px-2 py-0.5 tracking-wider">
+                  ROUND {level.round ?? (level.id <= 5 ? 1 : 2)}
+                </span>
+                <span className="text-[10px] tracked text-ink-dim">
+                  Lock {((level.id - 1) % 5) + 1} of 5 · Overall Chamber {pad2(level.id)} of {pad2(state.totalLevels)}
+                </span>
+              </div>
               <p className="flex flex-wrap items-center gap-x-3 text-[10px] tracked text-scale">
                 <span>
                   Lock {pad2(level.id)} · {level.codename}
@@ -868,6 +888,77 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
           ["Final time", formatDuration(elapsed)],
           ["Locks", `${state.totalLevels}/${state.totalLevels}`],
           ["Hint penalty", `${Math.round(state.penaltyMs / 60000)} min`],
+        ].map(([k, v]) => (
+          <div key={k} className="bg-panel px-3 py-4">
+            <dt className="text-[9px] tracked text-ink-dim">{k}</dt>
+            <dd className="mt-1 text-[15px] tabular-nums text-ember">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <Link href="/leaderboard" className="btn notch">
+          See standings
+        </Link>
+        <Link href="/" className="btn btn-ghost notch">
+          Back to briefing
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function Round1CheckpointCard({
+  state,
+  elapsed,
+  onRefresh,
+}: {
+  state: TeamState;
+  elapsed: number;
+  onRefresh: () => void;
+}) {
+  return (
+    <section className="panel notch brackets pop-3d mx-auto max-w-2xl p-6 text-center sm:p-10">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-scale/40 bg-scale/10 text-2xl text-scale shadow-[0_0_25px_rgba(223,168,75,0.25)]">
+        ✓
+      </div>
+      <p className="mt-4 text-[10px] tracked text-scale glow-scale font-semibold uppercase">
+        Stage 1 Cleared
+      </p>
+      <h1 className="mt-2 text-3xl text-ember glow sm:text-4xl">Round 1 Complete</h1>
+      <p className="mx-auto mt-3 max-w-prose text-[14px] leading-relaxed text-ink/85">
+        All 5 primary locks decoded. {state.team.name} has unsealed the outer sanctum.
+      </p>
+
+      <div className="notch mt-7 border border-scale/30 bg-scale/[0.05] p-5 text-left sm:p-6">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 animate-breathe rounded-full bg-scale" />
+          <p className="text-[11px] tracked text-scale font-mono uppercase font-semibold">
+            Awaiting Round 2 Transmission
+          </p>
+        </div>
+        <p className="mt-2 text-[13px] leading-relaxed text-ink/80">
+          Round 2 (Levels 6 to 10) is currently sealed. Organisers will broadcast the transmission signal shortly. This workstation will sync automatically.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="btn btn-ghost notch text-xs py-1.5 px-3 flex items-center gap-1.5"
+          >
+            <span>⟳</span> Check signal now
+          </button>
+          <span className="text-[10px] font-mono text-ink-dim">
+            Auto-checking every 10s
+          </span>
+        </div>
+      </div>
+
+      <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-3">
+        {[
+          ["Round 1 Time", formatDuration(elapsed)],
+          ["Locks Cleared", "5 of 5 (Round 1)"],
+          ["Hint Penalty", `${Math.round(state.penaltyMs / 60000)} min`],
         ].map(([k, v]) => (
           <div key={k} className="bg-panel px-3 py-4">
             <dt className="text-[9px] tracked text-ink-dim">{k}</dt>

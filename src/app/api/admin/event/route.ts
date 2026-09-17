@@ -34,6 +34,10 @@ export async function POST(req: NextRequest) {
     await setEventWindow(null, null);
   } else if (action === "close") {
     await setEventWindow(null, Date.now());
+  } else if (action === "round2") {
+    const { setRound2Unlocked } = await import("@/lib/admin");
+    const unlocked = Boolean((body as { unlocked?: unknown }).unlocked);
+    await setRound2Unlocked(unlocked);
   } else if (action === "lock") {
     const opensAt = parseWhen(body.opensAt);
     if (opensAt === null)

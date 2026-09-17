@@ -42,6 +42,8 @@ export type Gate = {
 
 export type Level = {
   id: number;
+  /** Round 1 (1-5) or Round 2 (6-10). */
+  round?: 1 | 2;
   /** Short uppercase codename shown in the progress rail. */
   codename: string;
   title: string;
@@ -77,9 +79,187 @@ export type Level = {
  */
 
 export const LEVELS: Level[] = [
-  /* ---------------------------------------------------------------- */
+  /* ================================================================
+   *  ROUND 1 (Levels 1 to 5)
+   * ================================================================ */
   {
     id: 1,
+    round: 1,
+    codename: "VENI",
+    title: "The Emperor's Third Step",
+    brief: "Every alphabet has a starting line. Someone moved it.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "A transmission was pulled off the campus loop at 03:12, somewhere between the Clock Tower and the Library. The letters arrived intact. Their positions did not.",
+      },
+      {
+        kind: "cipher",
+        text: "L dozdbv uxq exw qhyhu zdon. L kdyh d ehg, exw L qhyhu vohhs. L kdyh d prxwk, exw L qhyhu vshdn. Zkdw dp L?",
+        caption: "pilani/intercept_01.txt",
+      },
+      {
+        kind: "callout",
+        text: "He came, he saw, he conquered — three times.",
+      },
+    ],
+    hints: [
+      "The hint is the cipher's name. A Roman general lends it his.",
+      "Every letter has been pushed forward by the same small number. Push them back.",
+      "D → A. L → I. The shift is three.",
+    ],
+    freeHints: 1,
+    answers: ["river", "a river"],
+    successNote:
+      "Hold on to that word. The next lock does not want an answer — it wants a key.",
+  },
+
+  /* ---------------------------------------------------------------- */
+  {
+    id: 2,
+    round: 1,
+    codename: "CHIFFRE",
+    title: "Le Chiffre Indéchiffrable",
+    brief: "One shift was too easy. Take a different one for every letter.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "The second intercept came off the Shiv Ganga uplink and resisted the Roman's trick entirely. Frequency analysis returns nothing but noise — the shift is not constant, it walks.",
+      },
+      {
+        kind: "cipher",
+        text: "Npvx timvxlim recba jr wfcm pvxa dr kym hsieqik, knw gixj io rffv, vru kpmiv cmbw ze bci vmmimex?",
+        caption: "pilani/intercept_02.txt",
+      },
+      {
+        kind: "callout",
+        text: "Le chiffrage indéchiffrable. Each letter moves differently, according to one word. Your past experiences will help you.",
+      },
+    ],
+    hints: [
+      "The keyword is not hidden anywhere on this page. You already wrote it down.",
+      "Repeat your previous answer over the ciphertext, letter by letter, and let each pair decide the shift.",
+      "Key = RIVER. N − R = W. p − I = h. The plaintext is the oldest riddle there is.",
+    ],
+    freeHints: 1,
+    answers: ["human", "a human", "man", "a man", "human being", "humans"],
+    successNote:
+      "Words are running out. The next lock does not speak — it only shows.",
+  },
+
+  /* ---------------------------------------------------------------- */
+  {
+    id: 3,
+    round: 1,
+    codename: "GLYPH",
+    title: "Ten Faces, Five Names",
+    brief: "Five of these begin with something you already know.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "No text this time. Ten plates were recovered from a crate in the Birla Museum store room, in no particular order. Five of them are yours.",
+      },
+    ],
+    gate: {
+      prompt:
+        "Your last answer has five letters. Five of these plates begin with them. Select those five — in order.",
+      tiles: [
+        { id: "banjo", glyph: "🪕", label: "Plate 01" },
+        { id: "nose", glyph: "👃", label: "Plate 02" },
+        { id: "moon", glyph: "🌙", label: "Plate 03" },
+        { id: "arrow", glyph: "➡️", label: "Plate 04" },
+        { id: "owl", glyph: "🦉", label: "Plate 05" },
+        { id: "penguin", glyph: "🐧", label: "Plate 06" },
+        { id: "llama", glyph: "🦙", label: "Plate 07" },
+        { id: "heart", glyph: "❤️", label: "Plate 08" },
+        { id: "joker", glyph: "🃏", label: "Plate 09" },
+        { id: "umbrella", glyph: "☂️", label: "Plate 10" },
+      ],
+      sequence: ["heart", "umbrella", "moon", "arrow", "nose"],
+      rewardCaption:
+        "The five are numbered one to five in the order you found them. Two of them are now shown to you. Read them as digits.",
+      reward: [
+        { id: "arrow", glyph: "➡️", label: "First digit" },
+        { id: "umbrella", glyph: "☂️", label: "Second digit" },
+      ],
+    },
+    hints: [
+      "H, U, M, A, N. Name each plate out loud and listen to its first letter.",
+      "Heart, Umbrella, Moon, Arrow, Nose. That order gives them the numbers one through five.",
+      "The two revealed plates are the fourth and the second. Write the digits side by side.",
+    ],
+    freeHints: 1,
+    answers: ["42", "forty two", "fortytwo", "forty-two"],
+    successNote:
+      "A number, at last. Numbers count things. Go and count something.",
+  },
+
+  /* ---------------------------------------------------------------- */
+  {
+    id: 4,
+    round: 1,
+    codename: "COUNT",
+    title: "The Forty-Second",
+    brief: "The whole passage is a haystack. You were given the index.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "Recovered from the Library reading room, second floor, after closing. The page will not hold still, and it will not let you copy it. Read it the slow way.",
+      },
+      {
+        kind: "fadeEssay",
+        text: "The archive keeps no lights. It keeps records; records keep better in the dark, so the shelves run on and the corridors run with them. Every visitor is handed the same three things at the door: a name, a number, a lantern. Most people take the name. The clever ones take the number. Only the patient count what they were given, and counting is how the archive decides who may pass.",
+        note: "library/manuscript fragment — unstable",
+      },
+    ],
+    hints: [
+      "Your last answer was not a riddle. It was an index.",
+      "Count words, not lines, and count from the very first word of the passage.",
+      "Words thirty-seven onward: a, name, a, number, a, …",
+    ],
+    freeHints: 1,
+    answers: ["lantern", "a lantern", "the lantern"],
+    successNote:
+      "One light left. The last page has nothing written on it — which is the point.",
+  },
+
+  /* ---------------------------------------------------------------- */
+  {
+    id: 5,
+    round: 1,
+    codename: "MIRROR",
+    title: "The Last Light",
+    brief: "There is nothing on this page. Look at it anyway.",
+    blocks: [
+      {
+        kind: "altImage",
+        alt: "GSV URMZO ZMHDVI RH YLHN",
+        caption: "pilani/plate_final — 1 of 1",
+        sourceComment:
+          "the plate describes itself to anyone who cannot see it — ask your browser what it says",
+      },
+      {
+        kind: "callout",
+        text: "A is Z. B is Y. The alphabet, reflected in still water.",
+      },
+    ],
+    hints: [
+      "An image always carries a description for people who cannot see it. Open the inspector, or turn on a screen reader, and read the picture's alt text.",
+      "The description is enciphered by reflection: the first letter becomes the last, the second becomes the second-last.",
+      "GSV → THE. The sentence names its own answer, and the answer is four letters long.",
+    ],
+    freeHints: 1,
+    answers: ["bosm"],
+    successNote:
+      "The first vault is unsealed! Round 1 is conquered. Stand by for Round 2.",
+  },
+
+  /* ================================================================
+   *  ROUND 2 (Levels 6 to 10)
+   * ================================================================ */
+  {
+    id: 6,
+    round: 2,
     codename: "REBORN",
     title: "The Reborn Flame",
     brief: "I have lived past my time, but now I'm reborn.",
@@ -103,7 +283,8 @@ export const LEVELS: Level[] = [
 
   /* ---------------------------------------------------------------- */
   {
-    id: 2,
+    id: 7,
+    round: 2,
     codename: "CHRONOS",
     title: "The Pillar of Hours",
     brief: "Standing tall and sublime, you look at me when you're running out of time.",
@@ -134,7 +315,8 @@ export const LEVELS: Level[] = [
 
   /* ---------------------------------------------------------------- */
   {
-    id: 3,
+    id: 8,
+    round: 2,
     codename: "SERPENT",
     title: "Not Straight Ahead",
     brief: "Most days, you could walk past without stopping. On some days, it’s hard to miss.",
@@ -165,7 +347,8 @@ export const LEVELS: Level[] = [
 
   /* ---------------------------------------------------------------- */
   {
-    id: 4,
+    id: 9,
+    round: 2,
     codename: "OASIS",
     title: "The Shifting Spring",
     brief: "An allure that draws new faces, the point an oasis sprang from.",
@@ -181,12 +364,12 @@ export const LEVELS: Level[] = [
       },
       {
         kind: "callout",
-        text: "Ragbaby cipher. Key: SOUTH PARK. Each word tells you how to solve it.",
+        text: "Each word tells you how to solve it.",
       },
     ],
     hints: [
       "Each word tells you how to solve it.",
-      "Ragbaby cipher: key is SOUTH PARK. The shift advances with word and letter position.",
+      "The shift advances with word and letter position.",
     ],
     freeHints: 1,
     answers: ["shivganga", "shiv ganga", "shiv-ganga", "the shiv ganga"],
@@ -196,7 +379,8 @@ export const LEVELS: Level[] = [
 
   /* ---------------------------------------------------------------- */
   {
-    id: 5,
+    id: 10,
+    round: 2,
     codename: "OBSIDIAN",
     title: "The Standards of Shadow",
     brief: "What you see is not a shade, but a standard to be translated.",

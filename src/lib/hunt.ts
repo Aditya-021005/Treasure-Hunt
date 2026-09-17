@@ -71,6 +71,7 @@ export function elapsedMs(team: Team, now: number): number {
 function rail(db: DB, team: Team): RailEntry[] {
   return levelsOf(db).map((l) => ({
     id: l.id,
+    round: l.round ?? (l.id <= 5 ? 1 : 2),
     codename: l.codename,
     status:
       l.id < team.level ? "solved" : l.id === team.level ? "active" : "locked",
@@ -118,6 +119,10 @@ export function toState(
   now: number,
   override: EventOverride = null,
 ): TeamState {
+  const round2Unlocked = Boolean(db.round2Unlocked);
+  const round1Cleared = team.level > 5;
+  const round = team.level <= 5 ? 1 : 2;
+
   return {
     team: {
       name: team.name,
@@ -126,8 +131,11 @@ export function toState(
       isCaptain: team.captainId === viewerId,
     },
     level: team.level,
+    round,
     totalLevels: totalLevels(db),
     finished: team.level > totalLevels(db),
+    round1Cleared,
+    round2Unlocked,
     startedAt: team.startedAt ?? now,
     finishedAt: team.finishedAt,
     penaltyMs: team.penaltyMs,
@@ -166,6 +174,7 @@ export function toPublicLevel(db: DB, team: Team, id: number): PublicLevel | nul
 
   return {
     id: level.id,
+    round: level.round ?? (level.id <= 5 ? 1 : 2),
     codename: level.codename,
     title: level.title,
     brief: level.brief,
@@ -291,6 +300,12 @@ export async function submitAnswer(
     const t = team!;
     if (t.level > totalLevels(db))
       return { ok: false as const, error: "The hunt is already complete.", status: 400 };
+    if (t.level >= 6 && !db.round2Unlocked && !preview)
+      return {
+        ok: false as const,
+        error: "Round 2 has not been unlocked yet. Please stand by.",
+        status: 403,
+      };
     if (levelId !== t.level)
       return { ok: false as const, error: "That level is not open to you.", status: 403 };
     if (t.lockedUntil > now)

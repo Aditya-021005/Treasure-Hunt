@@ -110,11 +110,18 @@ export async function overview(): Promise<AdminOverview> {
       teams,
       admins: adminEmails(),
       vaultNote: db.vaultNote ?? "",
+      round2Unlocked: Boolean(db.round2Unlocked),
     };
   });
 }
 
 /* -------------------------------- actions ------------------------- */
+
+export async function setRound2Unlocked(unlocked: boolean): Promise<void> {
+  await transact((db) => {
+    db.round2Unlocked = unlocked;
+  });
+}
 
 export async function setEventWindow(
   opensAt: number | null,

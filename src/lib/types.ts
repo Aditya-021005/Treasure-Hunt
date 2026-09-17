@@ -33,6 +33,7 @@ export type AnswerShape = {
 
 export type PublicLevel = {
   id: number;
+  round?: number;
   codename: string;
   title: string;
   brief: string;
@@ -50,6 +51,7 @@ export type PublicLevel = {
 
 export type RailEntry = {
   id: number;
+  round?: number;
   codename: string;
   status: "solved" | "active" | "locked";
 };
@@ -110,8 +112,11 @@ export type Me = {
 export type TeamState = {
   team: { name: string; code: string; members: Member[]; isCaptain: boolean };
   level: number;
+  round?: number;
   totalLevels: number;
   finished: boolean;
+  round1Cleared: boolean;
+  round2Unlocked: boolean;
   startedAt: number;
   finishedAt: number | null;
   penaltyMs: number;
@@ -181,6 +186,7 @@ export type AdminOverview = {
   admins: string[];
   /** Shown on the vault page once a team finishes. */
   vaultNote: string;
+  round2Unlocked: boolean;
 };
 
 export type ApiError = { error: string; lockedUntil?: number; opensAt?: number };

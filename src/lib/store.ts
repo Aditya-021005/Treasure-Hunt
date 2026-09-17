@@ -76,6 +76,8 @@ type DB = {
    * panel so it can change on the day without a deploy.
    */
   vaultNote?: string | null;
+  /** Whether Round 2 (levels 6-10) is open for teams that cleared Round 1. */
+  round2Unlocked?: boolean;
   users: Record<string, User>;
   teams: Record<string, Team>;
   /** google sub -> user id */
