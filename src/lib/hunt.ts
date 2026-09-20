@@ -95,11 +95,15 @@ export function roundTimes(team: Team, now: number): {
   let round2Ranked = 0;
 
   if (team.level >= 6) {
-    const r2Solves = [6, 7, 8, 9, 10]
+    const r2Solves = Object.keys(team.solvedAt)
+      .map(Number)
+      .filter((lvl) => lvl >= 6)
       .map((lvl) => team.solvedAt[String(lvl)])
       .filter((t): t is number => typeof t === "number");
     const r2LastSolve = r2Solves.length ? Math.max(...r2Solves) : null;
-    const r2SolvedAt = team.solvedAt["10"] ?? (team.level > 10 ? team.finishedAt : null);
+    const r2SolvedAt =
+      team.finishedAt ??
+      team.solvedAt[String(Math.max(10, ...Object.keys(team.solvedAt).map(Number)))];
 
     // If round2StartedAt is set, or if they have solves in Round 2
     const r2Start = team.round2StartedAt ?? (r2Solves.length > 0 ? r2Solves[0] : null);

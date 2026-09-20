@@ -409,6 +409,150 @@ export const LEVELS: Level[] = [
     successNote:
       "The vault clicks open. You have recovered Obsidian. Take the final word to the desk to claim your victory!",
   },
+  /* ---------------------------------------------------------------- */
+  {
+    id: 11,
+    round: 2,
+    codename: "MONOLITH",
+    title: "The Stone Monument",
+    brief: "The one who played fair built a towering stone monument.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "An intercept recovered from the monument plaza. Two letters at a time, governed by the ancient matrix of the monolith.",
+      },
+      {
+        kind: "cipher",
+        text: "IN IE HG IN VH QW UP XR BT FW",
+        caption: "Polybius grid: 5x5 · Key: MONOLITH · I=J",
+      },
+    ],
+    hints: [
+      "A 5x5 Playfair grid constructed using the keyword MONOLITH followed by remaining alphabet letters (I and J combined).",
+      "Grid: (1) M O N L I, (2) T H A B C, (3) D E F G K, (4) P Q R S U, (5) V W X Y Z. Reverse rectangle and shift rules on digraph pairs.",
+      "The decrypted letter pairs form: LO OK BE LO WT HE SU RF AC EX (drop the trailing padding X).",
+    ],
+    freeHints: 1,
+    answers: ["look below the surface", "lookbelowthesurface", "look below the surface!"],
+    showLength: true,
+    successNote: "The stones shift aside. You gaze beneath the surface.",
+  },
+  /* ---------------------------------------------------------------- */
+  {
+    id: 12,
+    round: 2,
+    codename: "BACON",
+    title: "The Lord Chancellor's Initials",
+    brief: "The first letter of every word conceals a binary secret.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "A dispatch transcribed from an old academic journal. The grammar is immaculate, but the first letters of each word seem deliberate.",
+      },
+      {
+        kind: "callout",
+        text: "Not all answers are apparent. Ancient names need accurate notation. New archives are now available. Never accept all new names. Answers never need another answer. A careful analyst notes numbers. Always ask about all answers.",
+      },
+    ],
+    hints: [
+      "Take only the initial letters of each word in the message. There are 35 words forming seven 5-letter groups.",
+      "Bacon's cipher: divide the alphabet in half. Letters A through M represent 'a' (0), and letters N through Z represent 'b' (1).",
+      "Group into quintets: NAAAA = baaaa = R, ANNAN = abbab = O, NAANA = baaba = T, NAANN = baabb = U, ANNAA = abbaa = N, ACANN = aaabb = D, AAAAA = aaaaa = A.",
+    ],
+    freeHints: 1,
+    answers: ["rotunda", "the rotunda"],
+    showLength: true,
+    successNote: "The binary pattern collapses. The rotunda stands revealed.",
+  },
+  /* ---------------------------------------------------------------- */
+  {
+    id: 13,
+    round: 2,
+    codename: "DIAL",
+    title: "The Tower's Riddle",
+    brief: "A half-circle rotation speaks of the campus guardian.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "Scratched into a desk in the main building. Shifted thirteen notches forward, or backward — it makes no difference.",
+      },
+      {
+        kind: "cipher",
+        text: "Fgnaqvat gnyy naq fhoyvzr,\nLbh ybbx ng zr jura lbh'er ehaavat bhg bs gvzr.\nAb znggre ubj byq, lbh'yy nyjnlf gnxr zl cubgb,\nSbe V nz guvf cynpr'f vqragvgl naq zbggb.",
+        caption: "Shift 13 (ROT-13)",
+      },
+    ],
+    hints: [
+      "ROT-13 rotates every letter by exactly 13 places in the alphabet.",
+      "The deciphered verse reads: 'Standing tall and sublime, you look at me when you're running out of time. No matter how old, you'll always take my photo, for I am this place's identity and motto.'",
+      "The central architectural landmark of the BITS Pilani campus with a clock face.",
+    ],
+    freeHints: 1,
+    answers: [
+      "clock tower",
+      "bits clock tower",
+      "clocktower",
+      "the clock tower",
+      "the clocktower",
+    ],
+    showLength: true,
+    successNote: "The bells chime across campus. The tower acknowledges your passage.",
+  },
+  /* ---------------------------------------------------------------- */
+  {
+    id: 14,
+    round: 2,
+    codename: "QUARTERS",
+    title: "Minute Cryptic",
+    brief: "An indicator, fodder, and a campus definition.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "A slip of paper found tucked inside a library lexicon. In cryptic clues, one part is the instruction, one is the material, and one is the literal definition.",
+      },
+      {
+        kind: "callout",
+        text: "Scramble with dirty rooms (like SR Bhavan).",
+      },
+    ],
+    hints: [
+      "In cryptic crosswords: 'Scramble with' is an anagram indicator. Find what it is telling you to scramble.",
+      "Rearrange the 10 letters of 'dirty rooms' (D-I-R-T-Y-R-O-O-M-S).",
+      "The definition is 'like SR Bhavan' — a student residence hall or sleeping quarters.",
+    ],
+    freeHints: 1,
+    answers: ["dormitory", "a dormitory", "the dormitory", "hostel", "dorm"],
+    showLength: true,
+    successNote: "The letters click into place. The halls fall quiet.",
+  },
+  /* ---------------------------------------------------------------- */
+  {
+    id: 15,
+    round: 2,
+    codename: "ORDER",
+    title: "The Hidden Order",
+    brief: "A step of ten into the shadows of history.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "A cryptic signature left behind on the stonework. A constant backward shift of ten steps reveals their brotherhood.",
+      },
+      {
+        kind: "cipher",
+        text: "P BOO WK CYX",
+        caption: "Caesar shift: -10",
+      },
+    ],
+    hints: [
+      "Shift every letter backward in the alphabet by 10 positions (P -> F, B -> R, O -> E, etc.).",
+      "Decoded letters: F REE MA SON.",
+      "A member of the worldwide fraternal secret society known for the square and compass.",
+    ],
+    freeHints: 1,
+    answers: ["freemason", "freemasons", "free mason", "a freemason"],
+    showLength: true,
+    successNote: "The final vault seal disengages. The treasure is within your grasp.",
+  },
 ];
 
 export const TOTAL_LEVELS = LEVELS.length;
