@@ -54,6 +54,8 @@ export type Team = {
   startedAt: number | null;
   /** When this team entered Round 2 (Level 6). */
   round2StartedAt?: number | null;
+  /** When this team entered Round 3 (Level 11). */
+  round3StartedAt?: number | null;
   /** 1-based. Equals TOTAL_LEVELS + 1 once the hunt is finished. */
   level: number;
   finishedAt: number | null;

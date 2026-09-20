@@ -86,8 +86,8 @@ export async function overview(): Promise<AdminOverview> {
       const solved = Object.values(t.solvedAt).filter(
         (ts): ts is number => typeof ts === "number",
       ).length;
-      const { round1Elapsed, round2Elapsed } = roundTimes(t, now);
-      const isStarted = t.startedAt !== null || t.round2StartedAt !== null;
+      const { round1Elapsed, round2Elapsed, round3Elapsed } = roundTimes(t, now);
+      const isStarted = t.startedAt !== null || t.round2StartedAt !== null || t.round3StartedAt !== null;
       return {
         id: t.id,
         name: t.name,
@@ -101,6 +101,7 @@ export async function overview(): Promise<AdminOverview> {
         timeMs: isStarted ? rankedMs(t) : 0,
         round1Ms: round1Elapsed,
         round2Ms: round2Elapsed,
+        round3Ms: round3Elapsed,
         penaltyMs: t.penaltyMs,
         hintsUsed: Object.values(t.hintsUsed).reduce((a, b) => a + b, 0),
         attempts: Object.values(t.attempts).reduce((a, b) => a + b, 0),
@@ -176,9 +177,11 @@ export async function advanceAllTeamsToRound2(): Promise<{ advancedCount: number
 export async function advanceAllTeamsToLevel11(): Promise<{ advancedCount: number }> {
   return transact((db) => {
     let count = 0;
+    const now = Date.now();
     for (const team of Object.values(db.teams)) {
       if (team.level < 11) {
         team.level = 11;
+        team.round3StartedAt = now;
         team.finishedAt = null;
         count++;
       }

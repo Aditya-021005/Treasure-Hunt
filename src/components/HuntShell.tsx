@@ -186,20 +186,21 @@ export default function HuntShell() {
     ? Math.max(0, state.hintBudget - state.hintsTaken)
     : 0;
 
+  const stateReceivedAt = useRef(Date.now());
+  useEffect(() => {
+    stateReceivedAt.current = Date.now();
+  }, [state?.level, state?.elapsedMs]);
+
+  const liveQuestionElapsed = useMemo(() => {
+    if (!state || state.finished) return 0;
+    const base = state.currentQuestionElapsedMs ?? 0;
+    return base + Math.max(0, now - stateReceivedAt.current);
+  }, [state, now]);
+
   const elapsed = useMemo(() => {
     if (!state) return 0;
     if (state.finished) return state.elapsedMs;
-
-    const r1 = state.round1Cleared
-      ? state.round1Ms
-      : Math.max(0, now - state.startedAt);
-
-    const r2 =
-      state.level >= 6 && state.round2StartedAt
-        ? Math.max(0, now - state.round2StartedAt)
-        : 0;
-
-    return r1 + r2 + state.penaltyMs;
+    return state.elapsedMs + Math.max(0, now - stateReceivedAt.current);
   }, [state, now]);
 
   /* ---------------------------- actions --------------------------- */
@@ -466,11 +467,20 @@ export default function HuntShell() {
         </div>
 
         <div>
-          <p className="text-[10px] tracked text-ink-dim">Elapsed</p>
+          <p className="text-[10px] tracked text-ink-dim">
+            Elapsed {state.finished ? "" : `(Q${state.level})`}
+          </p>
           <p className="text-[14px] tabular-nums text-ink">
+            {formatDuration(state.finished ? elapsed : liveQuestionElapsed)}
+          </p>
+        </div>
+
+        <div title="Total active time across all solved levels plus penalties.">
+          <p className="text-[10px] tracked text-ink-dim">Active Total</p>
+          <p className="text-[14px] tabular-nums text-ink/80">
             {formatDuration(elapsed)}
             {state.penaltyMs > 0 && (
-              <span className="ml-2 text-[11px] text-scale">
+              <span className="ml-1.5 text-[11px] text-scale">
                 +{Math.round(state.penaltyMs / 60000)}m
               </span>
             )}
@@ -883,10 +893,11 @@ function FinishedCard({ state, elapsed }: { state: TeamState; elapsed: number })
         </div>
       ) : null}
 
-      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden border border-ember/15 bg-ember/15 sm:grid-cols-5">
+      <dl className={`mt-8 grid grid-cols-2 gap-px overflow-hidden border border-ember/15 bg-ember/15 ${Boolean(state.round3Ms) ? "sm:grid-cols-6" : "sm:grid-cols-5"}`}>
         {[
           ["Round 1", formatDuration(state.round1Ms)],
           ["Round 2", formatDuration(state.round2Ms)],
+          ...(Boolean(state.round3Ms) ? [["Round 3", formatDuration(state.round3Ms!)]] : []),
           ["Total Time", formatDuration(elapsed)],
           ["Locks", `${state.totalLevels}/${state.totalLevels}`],
           ["Penalty", `${Math.round(state.penaltyMs / 60000)} min`],

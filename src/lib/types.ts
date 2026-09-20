@@ -129,11 +129,14 @@ export type TeamState = {
   tabSwitches: number;
   startedAt: number;
   round2StartedAt?: number | null;
+  round3StartedAt?: number | null;
   finishedAt: number | null;
   penaltyMs: number;
   elapsedMs: number;
   round1Ms: number;
   round2Ms: number;
+  round3Ms?: number;
+  currentQuestionElapsedMs?: number;
   rail: RailEntry[];
   /** Epoch ms until which answering is rate-limited, if any. */
   lockedUntil: number | null;
@@ -188,6 +191,7 @@ export type AdminTeamRow = {
   timeMs: number;
   round1Ms?: number;
   round2Ms?: number;
+  round3Ms?: number;
   penaltyMs: number;
   hintsUsed: number;
   attempts: number;

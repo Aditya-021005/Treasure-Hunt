@@ -505,10 +505,11 @@ export default function AdminPanel() {
                   <span className="tabular-nums">
                     Total: {t.timeMs ? formatDuration(t.timeMs) : "—"}
                   </span>
-                  {(Boolean(t.round1Ms) || Boolean(t.round2Ms)) && (
+                  {(Boolean(t.round1Ms) || Boolean(t.round2Ms) || Boolean(t.round3Ms)) && (
                     <span className="tabular-nums text-ink-dim/80">
                       R1: {t.round1Ms ? formatDuration(t.round1Ms) : "—"} · R2:{" "}
                       {t.round2Ms ? formatDuration(t.round2Ms) : "—"}
+                      {Boolean(t.round3Ms) && ` · R3: ${formatDuration(t.round3Ms!)}`}
                     </span>
                   )}
                   <span className="tabular-nums">{t.hintsUsed} hints</span>
@@ -631,10 +632,11 @@ export default function AdminPanel() {
                   </td>
                   <td className="px-4 py-3 text-[13px] tabular-nums text-ink-dim">
                     <div>{t.timeMs ? formatDuration(t.timeMs) : "—"}</div>
-                    {(Boolean(t.round1Ms) || Boolean(t.round2Ms)) && (
+                    {(Boolean(t.round1Ms) || Boolean(t.round2Ms) || Boolean(t.round3Ms)) && (
                       <div className="text-[10px] text-ink-dim/75">
                         R1: {t.round1Ms ? formatDuration(t.round1Ms) : "—"} · R2:{" "}
                         {t.round2Ms ? formatDuration(t.round2Ms) : "—"}
+                        {Boolean(t.round3Ms) && ` · R3: ${formatDuration(t.round3Ms!)}`}
                       </div>
                     )}
                   </td>

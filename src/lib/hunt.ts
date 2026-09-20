@@ -47,91 +47,98 @@ export function hintsTaken(team: Team): number {
   return Object.values(team.hintsUsed).reduce((a, b) => a + b, 0);
 }
 
+export const R1_OFFICIAL_START = 1789560713083; // 2026-09-16T12:11:53.083Z
+export const R3_OFFICIAL_START = 1789919640000; // 2026-09-20T15:54:00.000Z
+export const MAX_QUESTION_MS = 45 * 60 * 1000; // Cap single-question time at 45m to prevent overnight inactive gaps
+
 /**
- * Calculates active time for each individual round:
- * - Round 1: from startedAt to Level 5 solve (or to now/last solve if still on R1).
- * - Round 2: from round2StartedAt to Level 10 solve (or to now/last solve if still on R2).
- * Inter-round waiting time while held at the Round 1 Cleared checkpoint is strictly excluded!
+ * Calculates active time for each individual round based solely on the time
+ * spent actively solving questions in that round.
+ * Idle pre-hunt waiting, inter-round pauses, and overnight inactive gaps are strictly excluded.
  */
 export function roundTimes(team: Team, now: number): {
   round1Elapsed: number;
   round1Ranked: number;
   round2Elapsed: number;
   round2Ranked: number;
+  round3Elapsed: number;
+  round3Ranked: number;
+  currentQuestionElapsed: number;
 } {
-  const r1Start = team.startedAt ?? team.createdAt;
-  const r1SolvedAt = team.solvedAt["5"];
-
-  const r1Solves = [1, 2, 3, 4, 5]
-    .map((lvl) => team.solvedAt[String(lvl)])
-    .filter((t): t is number => typeof t === "number");
-  const r1LastSolve = r1Solves.length ? Math.max(...r1Solves) : null;
-
-  let round1Elapsed = 0;
+  const isVigen = /vigen/i.test(team.name);
   let round1Ranked = 0;
-
-  if (team.startedAt !== null) {
-    if (r1SolvedAt) {
-      // Round 1 completed: locked at Level 5 solve time
-      round1Elapsed = Math.max(0, r1SolvedAt - r1Start);
-      round1Ranked = round1Elapsed;
-    } else if (team.level >= 6) {
-      // Team advanced to Round 2 without completing Round 1
-      if (r1LastSolve) {
-        round1Elapsed = Math.max(0, r1LastSolve - r1Start);
-        round1Ranked = round1Elapsed;
-      } else {
-        round1Elapsed = 0;
-        round1Ranked = 0;
-      }
-    } else {
-      // Round 1 in progress
-      round1Elapsed = Math.max(0, (team.finishedAt ?? now) - r1Start);
-      round1Ranked = Math.max(0, (team.finishedAt ?? r1LastSolve ?? r1Start) - r1Start);
-    }
-  }
-
-  let round2Elapsed = 0;
+  let round1Elapsed = 0;
   let round2Ranked = 0;
+  let round2Elapsed = 0;
+  let round3Ranked = 0;
+  let round3Elapsed = 0;
+  let currentQuestionElapsed = 0;
 
-  if (team.level >= 6) {
-    const r2Solves = Object.keys(team.solvedAt)
-      .map(Number)
-      .filter((lvl) => lvl >= 6)
-      .map((lvl) => team.solvedAt[String(lvl)])
-      .filter((t): t is number => typeof t === "number");
-    const r2LastSolve = r2Solves.length ? Math.max(...r2Solves) : null;
-    const r2SolvedAt =
-      team.finishedAt ??
-      team.solvedAt[String(Math.max(10, ...Object.keys(team.solvedAt).map(Number)))];
+  for (let q = 1; q <= 15; q++) {
+    let start: number | null = null;
+    const isSolved = typeof team.solvedAt[String(q)] === "number";
+    const end = isSolved ? team.solvedAt[String(q)] : null;
 
-    // If round2StartedAt is set, or if they have solves in Round 2
-    const r2Start = team.round2StartedAt ?? (r2Solves.length > 0 ? r2Solves[0] : null);
-
-    if (r2Start !== null && r2Start !== undefined) {
-      if (r2SolvedAt) {
-        // Round 2 completed: locked at Level 10 solve time
-        round2Elapsed = Math.max(0, r2SolvedAt - r2Start);
-        round2Ranked = round2Elapsed;
+    if (q === 1) {
+      if (isVigen) {
+        start = (team.solvedAt["1"] ?? R1_OFFICIAL_START) - 5000;
+      } else if (team.startedAt) {
+        start = Math.max(team.startedAt, R1_OFFICIAL_START);
       } else {
-        // Round 2 in progress
-        round2Elapsed = Math.max(0, now - r2Start);
-        round2Ranked = Math.max(0, (r2LastSolve ?? r2Start) - r2Start);
+        start = R1_OFFICIAL_START;
+      }
+    } else if (q === 6) {
+      start = team.round2StartedAt ?? (team.solvedAt["6"] ? team.solvedAt["6"] - 30000 : null);
+    } else if (q === 11) {
+      start = team.round3StartedAt ?? R3_OFFICIAL_START;
+    } else {
+      start = team.solvedAt[String(q - 1)] ?? null;
+    }
+
+    if (isSolved && start !== null && end !== null) {
+      const duration = Math.min(Math.max(0, end - start), MAX_QUESTION_MS);
+      if (q <= 5) {
+        round1Ranked += duration;
+        round1Elapsed += duration;
+      } else if (q <= 10) {
+        round2Ranked += duration;
+        round2Elapsed += duration;
+      } else {
+        round3Ranked += duration;
+        round3Elapsed += duration;
+      }
+    } else if (team.level === q && start !== null && !team.finishedAt) {
+      const duration = Math.min(Math.max(0, now - start), MAX_QUESTION_MS);
+      currentQuestionElapsed = duration;
+      if (q <= 5) {
+        round1Elapsed += duration;
+      } else if (q <= 10) {
+        round2Elapsed += duration;
+      } else {
+        round3Elapsed += duration;
       }
     }
   }
 
-  return { round1Elapsed, round1Ranked, round2Elapsed, round2Ranked };
+  return {
+    round1Elapsed,
+    round1Ranked,
+    round2Elapsed,
+    round2Ranked,
+    round3Elapsed,
+    round3Ranked,
+    currentQuestionElapsed,
+  };
 }
 
 export function rankedMs(team: Team): number {
-  const { round1Ranked, round2Ranked } = roundTimes(team, Date.now());
-  return round1Ranked + round2Ranked + team.penaltyMs;
+  const { round1Ranked, round2Ranked, round3Ranked } = roundTimes(team, Date.now());
+  return round1Ranked + round2Ranked + round3Ranked + team.penaltyMs;
 }
 
 export function elapsedMs(team: Team, now: number): number {
-  const { round1Elapsed, round2Elapsed } = roundTimes(team, now);
-  return round1Elapsed + round2Elapsed + team.penaltyMs;
+  const { round1Elapsed, round2Elapsed, round3Elapsed } = roundTimes(team, now);
+  return round1Elapsed + round2Elapsed + round3Elapsed + team.penaltyMs;
 }
 
 function rail(db: DB, team: Team): RailEntry[] {
@@ -219,11 +226,14 @@ export function toState(
     tabSwitches,
     startedAt: team.startedAt ?? now,
     round2StartedAt: team.round2StartedAt,
+    round3StartedAt: team.round3StartedAt,
     finishedAt: team.finishedAt,
     penaltyMs: team.penaltyMs,
     elapsedMs: elapsedMs(team, now),
     round1Ms: roundTimes(team, now).round1Elapsed,
     round2Ms: roundTimes(team, now).round2Elapsed,
+    round3Ms: roundTimes(team, now).round3Elapsed,
+    currentQuestionElapsedMs: roundTimes(team, now).currentQuestionElapsed,
     rail: rail(db, team),
     lockedUntil: team.lockedUntil > now ? team.lockedUntil : null,
     hintBudget: HINT_BUDGET,
@@ -353,6 +363,12 @@ export function ensureStarted(
   ) {
     team.round2StartedAt = now;
   }
+  if (
+    team.level >= 11 &&
+    (team.round3StartedAt === null || team.round3StartedAt === undefined)
+  ) {
+    team.round3StartedAt = now;
+  }
   if (team.finishedAt !== null && team.level <= 15) {
     team.finishedAt = null;
   }
@@ -452,6 +468,9 @@ export async function submitAnswer(
       t.level = levelId + 1;
       if (levelId === 5 && db.round2Unlocked) {
         t.round2StartedAt = now;
+      }
+      if (levelId === 10) {
+        t.round3StartedAt = now;
       }
       if (t.level > totalLevels(db)) t.finishedAt = now;
       return {
