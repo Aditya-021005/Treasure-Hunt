@@ -381,6 +381,27 @@ export default function AdminPanel() {
           >
             Advance all teams to Round 2
           </Btn>
+
+          <Btn
+            type="button"
+            variant="ghost"
+            loading={busy}
+            onClick={() => {
+              if (
+                confirm(
+                  "Advance all teams currently on Levels 1–10 to Level 11 (Round 3)?",
+                )
+              ) {
+                post(
+                  "/api/admin/event",
+                  { action: "advance-level11" },
+                  "All teams advanced to Level 11 (Round 3)!",
+                );
+              }
+            }}
+          >
+            Advance all teams to Level 11 (Round 3)
+          </Btn>
         </div>
       </section>
 

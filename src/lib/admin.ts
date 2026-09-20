@@ -173,6 +173,20 @@ export async function advanceAllTeamsToRound2(): Promise<{ advancedCount: number
   });
 }
 
+export async function advanceAllTeamsToLevel11(): Promise<{ advancedCount: number }> {
+  return transact((db) => {
+    let count = 0;
+    for (const team of Object.values(db.teams)) {
+      if (team.level < 11) {
+        team.level = 11;
+        team.finishedAt = null;
+        count++;
+      }
+    }
+    return { advancedCount: count };
+  });
+}
+
 export async function setEventWindow(
   opensAt: number | null,
   closesAt: number | null,

@@ -353,6 +353,9 @@ export function ensureStarted(
   ) {
     team.round2StartedAt = now;
   }
+  if (team.finishedAt !== null && team.level <= 15) {
+    team.finishedAt = null;
+  }
 }
 
 /* -------------------------------- actions ------------------------- */
@@ -621,7 +624,7 @@ export async function leaderboard(
         name: t.name,
         solved,
         totalLevels: total,
-        finished: t.finishedAt !== null,
+        finished: t.finishedAt !== null && t.level > total,
         timeMs: rankedMs(t),
         hintsUsed: Object.values(t.hintsUsed).reduce((a, b) => a + b, 0),
         startedAt: start,

@@ -46,6 +46,10 @@ export async function POST(req: NextRequest) {
     const { advanceAllTeamsToRound2 } = await import("@/lib/admin");
     const r = await advanceAllTeamsToRound2();
     return Response.json({ ok: true, ...r });
+  } else if (action === "advance-level11") {
+    const { advanceAllTeamsToLevel11 } = await import("@/lib/admin");
+    const r = await advanceAllTeamsToLevel11();
+    return Response.json({ ok: true, ...r });
   } else if (action === "unlock-user") {
     const { unlockUserAccount } = await import("@/lib/admin");
     const targetUserId = String((body as { userId?: unknown }).userId ?? "");
